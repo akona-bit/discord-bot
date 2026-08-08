@@ -48,7 +48,9 @@ _DEFAULT_STAR = '\N{WHITE MEDIUM STAR}'
 OAUTH_CLIENT_ID = os.environ.get('OAUTH_CLIENT_ID')
 OAUTH_CLIENT_SECRET = os.environ.get('OAUTH_CLIENT_SECRET')
 OAUTH_REDIRECT_URI = os.environ.get('OAUTH_REDIRECT_URI')
-OAUTH_SERVER_PORT = int(os.environ.get('OAUTH_SERVER_PORT', os.environ.get('PORT', '8080')))
+OAUTH_SERVER_PORT = int(
+    os.environ.get('OAUTH_SERVER_PORT', os.environ.get('PORT', '8080'))
+)
 OAUTH_CONFIGURED = bool(OAUTH_CLIENT_ID and OAUTH_CLIENT_SECRET and OAUTH_REDIRECT_URI)
 
 # Gist Backup

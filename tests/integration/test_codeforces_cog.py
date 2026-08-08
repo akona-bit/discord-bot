@@ -124,17 +124,17 @@ async def cog_env(user_db):
 class TestValidateGitgudStatus:
     async def test_invalid_delta_not_multiple_of_100(self, cog_env):
         cog, ctx, _, _ = cog_env
-        with pytest.raises(CodeforcesCogError, match='multiple of 100'):
+        with pytest.raises(CodeforcesCogError, match='bội của 100'):
             await cog._validate_gitgud_status(ctx, delta=50)
 
     async def test_delta_too_large(self, cog_env):
         cog, ctx, _, _ = cog_env
-        with pytest.raises(CodeforcesCogError, match='Delta must range'):
+        with pytest.raises(CodeforcesCogError, match='Delta phải nằm trong khoảng'):
             await cog._validate_gitgud_status(ctx, delta=400)
 
     async def test_delta_too_negative(self, cog_env):
         cog, ctx, _, _ = cog_env
-        with pytest.raises(CodeforcesCogError, match='Delta must range'):
+        with pytest.raises(CodeforcesCogError, match='Delta phải nằm trong khoảng'):
             await cog._validate_gitgud_status(ctx, delta=-400)
 
     async def test_active_challenge_raises(self, cog_env):
@@ -144,7 +144,7 @@ class TestValidateGitgudStatus:
         await bot.user_db.new_challenge(
             12345, datetime.datetime.now().timestamp(), p, 0
         )
-        with pytest.raises(CodeforcesCogError, match='active challenge'):
+        with pytest.raises(CodeforcesCogError, match='Bạn đang có thử thách'):
             await cog._validate_gitgud_status(ctx, delta=0)
 
     async def test_delta_none_skips_delta_checks(self, cog_env):
@@ -222,5 +222,5 @@ class TestGimme:
             return_value=_make_user(handle='tourist', rating=9999)
         )
 
-        with pytest.raises(CodeforcesCogError, match='not found'):
+        with pytest.raises(CodeforcesCogError, match='Không tìm thấy bài toán'):
             await cog.gimme.callback(cog, ctx)

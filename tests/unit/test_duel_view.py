@@ -53,14 +53,14 @@ class TestDuelChallengeViewInit:
     async def test_button_labels(self):
         view = _make_view()
         labels = {item.label for item in view.children}
-        assert labels == {'Accept', 'Decline', 'Withdraw'}
+        assert labels == {'Chấp nhận', 'Từ chối', 'Rút'}
 
     async def test_button_styles(self):
         view = _make_view()
         styles = {item.label: item.style for item in view.children}
-        assert styles['Accept'] == discord.ButtonStyle.success
-        assert styles['Decline'] == discord.ButtonStyle.danger
-        assert styles['Withdraw'] == discord.ButtonStyle.secondary
+        assert styles['Chấp nhận'] == discord.ButtonStyle.success
+        assert styles['Từ chối'] == discord.ButtonStyle.danger
+        assert styles['Rút'] == discord.ButtonStyle.secondary
 
 
 class TestAcceptButton:
@@ -71,7 +71,7 @@ class TestAcceptButton:
         await view.accept_button.callback(interaction)
 
         interaction.response.send_message.assert_awaited_once_with(
-            'Only the challenged user can accept.',
+            'Chỉ người được thách đấu mới có thể chấp nhận.',
             ephemeral=True,
         )
 
@@ -82,7 +82,7 @@ class TestAcceptButton:
         await view.accept_button.callback(interaction)
 
         interaction.response.send_message.assert_awaited_once_with(
-            'Only the challenged user can accept.',
+            'Chỉ người được thách đấu mới có thể chấp nhận.',
             ephemeral=True,
         )
 
@@ -136,7 +136,7 @@ class TestAcceptButton:
 
         # Should send error about unable to start
         calls = channel.send.call_args_list
-        assert any('Unable to start' in str(call) for call in calls)
+        assert any('Không thể bắt đầu' in str(call) for call in calls)
 
 
 class TestDeclineButton:
@@ -147,7 +147,7 @@ class TestDeclineButton:
         await view.decline_button.callback(interaction)
 
         interaction.response.send_message.assert_awaited_once_with(
-            'Only the challenged user can decline.',
+            'Chỉ người được thách đấu mới có thể từ chối.',
             ephemeral=True,
         )
 
@@ -158,7 +158,7 @@ class TestDeclineButton:
         await view.decline_button.callback(interaction)
 
         interaction.response.send_message.assert_awaited_once_with(
-            'Only the challenged user can decline.',
+            'Chỉ người được thách đấu mới có thể từ chối.',
             ephemeral=True,
         )
 
@@ -197,7 +197,7 @@ class TestDeclineButton:
 
         await view.decline_button.callback(interaction)
 
-        channel.send.assert_awaited_with('This duel has already been resolved.')
+        channel.send.assert_awaited_with('Trận đấu này đã được giải quyết rồi.')
 
 
 class TestWithdrawButton:
@@ -208,7 +208,7 @@ class TestWithdrawButton:
         await view.withdraw_button.callback(interaction)
 
         interaction.response.send_message.assert_awaited_once_with(
-            'Only the challenger can withdraw.',
+            'Chỉ người thách đấu mới có thể rút.',
             ephemeral=True,
         )
 
@@ -219,7 +219,7 @@ class TestWithdrawButton:
         await view.withdraw_button.callback(interaction)
 
         interaction.response.send_message.assert_awaited_once_with(
-            'Only the challenger can withdraw.',
+            'Chỉ người thách đấu mới có thể rút.',
             ephemeral=True,
         )
 
@@ -258,7 +258,7 @@ class TestWithdrawButton:
 
         await view.withdraw_button.callback(interaction)
 
-        channel.send.assert_awaited_with('This duel has already been resolved.')
+        channel.send.assert_awaited_with('Trận đấu này đã được giải quyết rồi.')
 
 
 class TestOnTimeout:

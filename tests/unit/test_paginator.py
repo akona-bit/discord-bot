@@ -139,8 +139,8 @@ class TestPaginateFunction:
 
         await paginate(channel, pages, wait_time=60, set_pagenum_footers=True)
 
-        embed1.set_footer.assert_called_once_with(text='Page 1 / 2')
-        embed2.set_footer.assert_called_once_with(text='Page 2 / 2')
+        embed1.set_footer.assert_called_once_with(text='Trang 1 / 2')
+        embed2.set_footer.assert_called_once_with(text='Trang 2 / 2')
 
     async def test_single_page_no_footers(self):
         channel = AsyncMock()
