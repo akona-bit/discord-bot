@@ -93,14 +93,14 @@ class Starboard(commands.Cog):
         guild = self.bot.get_guild(payload.guild_id)
         starboard_channel = guild.get_channel(channel_id)
         if starboard_channel is None:
-            raise StarboardCogError('Starboard channel not found')
+            raise StarboardCogError('Không tìm thấy kênh starboard')
 
         channel = self.bot.get_channel(payload.channel_id)
         message = await channel.fetch_message(payload.message_id)
         if message.type != discord.MessageType.default or (
             not message.content and not message.attachments
         ):
-            raise StarboardCogError('Cannot starboard this message')
+            raise StarboardCogError('Không thể thêm tin nhắn này vào starboard')
 
         count = sum(r.count for r in message.reactions if str(r) == emoji)
         if count < threshold:
@@ -136,7 +136,7 @@ class Starboard(commands.Cog):
         await self.bot.user_db.add_starboard_emoji(ctx.guild.id, emoji, threshold, clr)
         await ctx.send(
             embed=discord_common.embed_success(
-                f'Added {emoji}: threshold={threshold}, color={hex(clr)}'
+                f'Đã thêm {emoji}: ngưỡng={threshold}, màu={hex(clr)}'
             )
         )
 
@@ -146,7 +146,7 @@ class Starboard(commands.Cog):
         """Unregister an emoji from starboard."""
         await self.bot.user_db.remove_starboard_emoji(ctx.guild.id, emoji)
         await self.bot.user_db.clear_starboard_channel(ctx.guild.id, emoji)
-        await ctx.send(embed=discord_common.embed_success(f'Removed {emoji}'))
+        await ctx.send(embed=discord_common.embed_success(f'Đã xóa {emoji}'))
 
     @starboard.command(brief='Edit threshold for an emoji')
     @commands.has_role(constants.TLE_ADMIN)
@@ -159,7 +159,7 @@ class Starboard(commands.Cog):
         )
         await ctx.send(
             embed=discord_common.embed_success(
-                f'Updated {emoji} threshold to {threshold}'
+                f'Đã cập nhật ngưỡng cho {emoji} thành {threshold}'
             )
         )
 
@@ -170,7 +170,7 @@ class Starboard(commands.Cog):
         clr = int(color, 16)
         await self.bot.user_db.update_starboard_color(ctx.guild.id, emoji, clr)
         await ctx.send(
-            embed=discord_common.embed_success(f'Updated {emoji} color to {hex(clr)}')
+            embed=discord_common.embed_success(f'Đã cập nhật màu cho {emoji} thành {hex(clr)}')
         )
 
     @starboard.command(brief='Set starboard channel (and optional color) for an emoji')
@@ -180,7 +180,7 @@ class Starboard(commands.Cog):
         await self.bot.user_db.set_starboard_channel(
             ctx.guild.id, emoji, ctx.channel.id
         )
-        msg = f'Set {emoji} channel to {ctx.channel.mention}'
+        msg = f'Đã đặt kênh cho {emoji} thành {ctx.channel.mention}'
         await ctx.send(embed=discord_common.embed_success(msg))
 
     @starboard.command(brief='Clear starboard channel for an emoji')
@@ -189,7 +189,7 @@ class Starboard(commands.Cog):
         """Remove the starboard channel (and color) setting for an emoji."""
         await self.bot.user_db.clear_starboard_channel(ctx.guild.id, emoji)
         await ctx.send(
-            embed=discord_common.embed_success(f'Cleared channel for {emoji}')
+            embed=discord_common.embed_success(f'Đã xóa kênh cho {emoji}')
         )
 
     @starboard.command(brief='Remove a message from starboard')
@@ -202,9 +202,9 @@ class Starboard(commands.Cog):
             original_msg_id=original_message_id, emoji=emoji
         )
         if rc:
-            await ctx.send(embed=discord_common.embed_success('Successfully removed'))
+            await ctx.send(embed=discord_common.embed_success('Đã xóa thành công'))
         else:
-            await ctx.send(embed=discord_common.embed_alert('Not found'))
+            await ctx.send(embed=discord_common.embed_alert('Không tìm thấy'))
 
     @discord_common.send_error_if(StarboardCogError)
     async def cog_command_error(
