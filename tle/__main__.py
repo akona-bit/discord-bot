@@ -83,6 +83,7 @@ class TLEBot(commands.Bot):
         self.nodb: bool = nodb
         self.oauth_server: Any = None
         self.oauth_state_store: Any = None
+        self._keep_alive_task: asyncio.Task[None] | None = None
 
     async def get_context(
         self, message: discord.Message, *, cls: type | None = None
@@ -124,7 +125,12 @@ class TLEBot(commands.Bot):
         await self.tree.sync()
         logging.info('Slash commands synced')
 
+        # Start self-ping task to keep Render/hosting service alive.
+        self._keep_alive_task = asyncio.create_task(self._self_ping_loop())
+
     async def close(self) -> None:
+        if self._keep_alive_task is not None:
+            self._keep_alive_task.cancel()
         if self.oauth_server is not None:
             await self.oauth_server.stop()
         try:
@@ -151,6 +157,29 @@ class TLEBot(commands.Bot):
         site = web.TCPSite(self._health_runner, '0.0.0.0', port)
         await site.start()
         logging.info('Health-check server listening on port %d', port)
+
+    async def _self_ping_loop(self) -> None:
+        """Periodically ping the bot's own health endpoint to prevent
+        Render free-tier from spinning down the service after inactivity."""
+        _SELF_PING_INTERVAL = 10 * 60  # 10 minutes
+        redirect_uri = environ.get('OAUTH_REDIRECT_URI', '')
+        if not redirect_uri:
+            # No external URL configured; self-ping is unnecessary.
+            return
+
+        # Ensure the URL ends with /
+        ping_url = redirect_uri.rstrip('/') + '/'
+        logging.info('Self-ping enabled: will ping %s every %ds', ping_url, _SELF_PING_INTERVAL)
+
+        await asyncio.sleep(30)  # Initial delay so the server is ready.
+        async with aiohttp.ClientSession() as session:
+            while True:
+                try:
+                    async with session.get(ping_url, timeout=aiohttp.ClientTimeout(total=15)) as resp:
+                        logging.debug('Self-ping %s -> %d', ping_url, resp.status)
+                except Exception as e:
+                    logging.warning('Self-ping failed: %s', e)
+                await asyncio.sleep(_SELF_PING_INTERVAL)
 
 
 def main() -> None:
@@ -206,8 +235,9 @@ def main() -> None:
 
     bot.add_listener(discord_common.bot_error_handler, name='on_command_error')
 
-    bot.run(token)
+    bot.run(token, reconnect=True)
 
 
 if __name__ == '__main__':
     main()
+

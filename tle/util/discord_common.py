@@ -141,13 +141,15 @@ async def presence(bot: Any) -> None:
 
     @tasks.task(name='OrzUpdate', waiter=tasks.Waiter.fixed_delay(10 * 60))
     async def presence_task(_: Any) -> None:
-        target = random.choice(
-            [
-                member
-                for member in bot.get_all_members()
-                if not has_role(member, constants.TLE_PURGATORY)
-            ]
-        )
+        eligible = [
+            member
+            for member in bot.get_all_members()
+            if not has_role(member, constants.TLE_PURGATORY)
+        ]
+        if not eligible:
+            logger.warning('No eligible members for presence update, skipping.')
+            return
+        target = random.choice(eligible)
         await bot.change_presence(
             activity=discord.Game(name=f'{target.display_name} orz')
         )

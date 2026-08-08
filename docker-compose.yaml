@@ -11,7 +11,7 @@ services:
     volumes:
       - ./data:/bot/data
 
-    restart: no
+    restart: unless-stopped
 
     logging:
       driver: json-file
