@@ -667,7 +667,7 @@ class Contests(commands.Cog):
         )
 
     @commands.command(
-        brief='Bắt đầu một rated VC.', usage='<contest_id> <@user1 @user2 ...>'}
+        brief='Bắt đầu một rated VC.', usage='<contest_id> <@user1 @user2 ...>'
     )
     async def ratedvc(
         self, ctx: commands.Context, contest_id: int, *members: discord.Member
