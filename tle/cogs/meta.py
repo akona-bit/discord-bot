@@ -48,56 +48,56 @@ class Meta(commands.Cog):
         self.bot = bot
         self.start_time = time.time()
 
-    @commands.hybrid_group(brief='Bot control', fallback='show')
+    @commands.hybrid_group(brief='Điều khiển bot', fallback='show')
     async def meta(self, ctx: commands.Context) -> None:
         """Command the bot or get information about the bot."""
         await ctx.send_help(ctx.command)
 
-    @meta.command(brief='Kill TLE')
+    @meta.command(brief='Tắt TLE')
     @commands.has_role(constants.TLE_ADMIN)
     async def kill(self, ctx: commands.Context) -> None:
-        """Shuts down the bot gracefully."""
-        await ctx.send('Shutting down...')
+        """Tắt bot một cách trơn tru."""
+        await ctx.send('Đang tắt...')
         await self.bot.close()
         sys.exit(0)
 
-    @meta.command(brief='Is TLE up?')
+    @meta.command(brief='TLE còn hoạt động?')
     async def ping(self, ctx: commands.Context) -> None:
-        """Replies to a ping."""
+        """Phản hồi với một ping."""
         start = time.perf_counter()
         message = await ctx.send(':ping_pong: Pong!')
         end = time.perf_counter()
         duration = (end - start) * 1000
         await message.edit(
             content=(
-                f'REST API latency: {int(duration)}ms\n'
-                f'Gateway API latency: {int(self.bot.latency * 1000)}ms'
+                f'Độ trễ REST API: {int(duration)}ms\n'
+                f'Độ trễ Gateway API: {int(self.bot.latency * 1000)}ms'
             )
         )
 
-    @meta.command(brief='Get git information')
+    @meta.command(brief='Lấy thông tin git')
     async def git(self, ctx: commands.Context) -> None:
-        """Replies with git information."""
+        """Trả về thông tin git."""
         await ctx.send('```yaml\n' + git_history() + '```')
 
-    @meta.command(brief='Prints bot uptime')
+    @meta.command(brief='Hiển thị thời gian chạy bot')
     async def uptime(self, ctx: commands.Context) -> None:
-        """Replies with how long TLE has been up."""
+        """Trả về thời gian bot đã chạy."""
         await ctx.send(
-            'TLE has been running for '
+            'TLE đã chạy trong '
             + pretty_time_format(time.time() - self.start_time)
         )
 
-    @meta.command(brief='Print bot guilds')
+    @meta.command(brief='Liệt kê server bot')
     @commands.has_role(constants.TLE_ADMIN)
     async def guilds(self, ctx: commands.Context) -> None:
-        "Replies with info on the bot's guilds"
+        """Trả về thông tin các server mà bot tham gia"""
         msg = [
             ' | '.join(
                 [
-                    f'Guild ID: {guild.id}',
-                    f'Name: {guild.name}',
-                    f'Owner: {guild.owner.id}',
+                    f'ID Server: {guild.id}',
+                    f'Tên: {guild.name}',
+                    f'Chủ sở hữu: {guild.owner.id}',
                     f'Icon: {guild.icon.url if guild.icon else None}',
                 ]
             )

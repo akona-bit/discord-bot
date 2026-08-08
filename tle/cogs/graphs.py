@@ -41,10 +41,10 @@ class GraphCogError(commands.CommandError):
 
 def nice_sub_type(types: list[str]) -> list[str]:
     nice_map = {
-        'CONTESTANT': 'Contest: {}',
-        'OUT_OF_COMPETITION': 'Unofficial: {}',
-        'VIRTUAL': 'Virtual: {}',
-        'PRACTICE': 'Practice: {}',
+        'CONTESTANT': 'Cuộc thi: {}',
+        'OUT_OF_COMPETITION': 'Không chính thức: {}',
+        'VIRTUAL': 'Ảo: {}',
+        'PRACTICE': 'Luyện tập: {}',
     }
     return [nice_map[t] for t in types]
 
@@ -227,7 +227,7 @@ def _plot_extreme(
             s=14,
             marker='o',
             color=unsolvedcolor,
-            label='Easiest unsolved',
+            label='Bài chưa giải dễ nhất',
         )
     if solved:
         scatter_outline(
@@ -237,7 +237,7 @@ def _plot_extreme(
             s=14,
             marker='o',
             color=solvedcolor,
-            label='Hardest solved',
+            label='Bài đã giải khó nhất',
         )
 
     ax = plt.gca()

@@ -34,12 +34,11 @@ class Codeforces(commands.Cog):
         self, ctx: commands.Context, delta: int | None
     ) -> None:
         if delta is not None and delta % 100 != 0:
-            raise CodeforcesCogError('Delta must be a multiple of 100.')
+            raise CodeforcesCogError('Delta phải là bội của 100.')
 
         if delta is not None and abs(delta) > _GITGUD_MAX_ABS_DELTA_VALUE:
             raise CodeforcesCogError(
-                f'Delta must range from -{_GITGUD_MAX_ABS_DELTA_VALUE}'
-                f' to {_GITGUD_MAX_ABS_DELTA_VALUE}.'
+                f'Delta phải nằm trong khoảng -{_GITGUD_MAX_ABS_DELTA_VALUE} đến {_GITGUD_MAX_ABS_DELTA_VALUE}.'
             )
 
         user_id = ctx.message.author.id
@@ -47,7 +46,7 @@ class Codeforces(commands.Cog):
         if active is not None:
             _, _, name, contest_id, index, _ = active
             url = f'{cf.CONTEST_BASE_URL}{contest_id}/problem/{index}'
-            raise CodeforcesCogError(f'You have an active challenge {name} at {url}')
+            raise CodeforcesCogError(f'Bạn đang có thử thách {name} tại {url}')
 
     async def _gitgud(
         self, ctx: commands.Context, handle: str, problem: cf.Problem, delta: int
@@ -60,16 +59,16 @@ class Codeforces(commands.Cog):
         rc = await self.bot.user_db.new_challenge(user_id, issue_time, problem, delta)
         if rc != 1:
             raise CodeforcesCogError(
-                'Your challenge has already been added to the database!'
+                'Thử thách của bạn đã được thêm vào cơ sở dữ liệu!'
             )
 
         title = f'{problem.index}. {problem.name}'
         desc = self.bot.cf_cache.contest_cache.get_contest(problem.contestId).name
         embed = discord.Embed(title=title, url=problem.url, description=desc)
-        embed.add_field(name='Rating', value=problem.rating)
-        await ctx.send(f'Challenge problem for `{handle}`', embed=embed)
+        embed.add_field(name='Độ khó', value=problem.rating)
+        await ctx.send(f'Bài thử thách cho `{handle}`', embed=embed)
 
-    @commands.hybrid_command(brief='Upsolve a problem')
+    @commands.hybrid_command(brief='Upsolve một bài')
     @cf_common.user_guard(group='gitgud')
     async def upsolve(self, ctx: commands.Context, choice: int = -1) -> None:
         """Request an unsolved problem from a contest you participated in
@@ -95,7 +94,7 @@ class Codeforces(commands.Cog):
         ]
 
         if not problems:
-            raise CodeforcesCogError('Problems not found within the search parameters')
+            raise CodeforcesCogError('Không tìm thấy bài toán phù hợp với tham số tìm kiếm')
 
         problems.sort(
             key=lambda problem: (
@@ -114,11 +113,11 @@ class Codeforces(commands.Cog):
                 f'{i + 1}: [{prob.name}]({prob.url}) [{prob.rating}]'
                 for i, prob in enumerate(problems[:5])
             )
-            title = f'Select a problem to upsolve (1-{len(problems)}):'
+            title = f'Chọn một bài để upsolve (1-{len(problems)}):'
             embed = discord_common.cf_color_embed(title=title, description=msg)
             await ctx.send(embed=embed)
 
-    @commands.command(brief='Recommend a problem', usage='[+tag..] [~tag..] [rating]')
+    @commands.command(brief='Gợi ý bài toán', usage='[+tag..] [~tag..] [rating]')
     @cf_common.user_guard(group='gitgud')
     async def gimme(self, ctx: commands.Context, *args: str) -> None:
         (handle,) = await cf_common.resolve_handles(
@@ -144,7 +143,7 @@ class Codeforces(commands.Cog):
         ]
 
         if not problems:
-            raise CodeforcesCogError('Problems not found within the search parameters')
+            raise CodeforcesCogError('Không tìm thấy bài toán phù hợp với tham số tìm kiếm')
 
         problems.sort(
             key=lambda problem: (
@@ -160,14 +159,14 @@ class Codeforces(commands.Cog):
         title = f'{problem.index}. {problem.name}'
         desc = self.bot.cf_cache.contest_cache.get_contest(problem.contestId).name
         embed = discord.Embed(title=title, url=problem.url, description=desc)
-        embed.add_field(name='Rating', value=problem.rating)
+        embed.add_field(name='Độ khó', value=problem.rating)
         if tags:
             tagslist = ', '.join(problem.get_matched_tags(tags))
-            embed.add_field(name='Matched tags', value=tagslist)
-        await ctx.send(f'Recommended problem for `{handle}`', embed=embed)
+            embed.add_field(name='Tags khớp', value=tagslist)
+        await ctx.send(f'Bài toán gợi ý cho `{handle}`', embed=embed)
 
     @commands.command(
-        brief='List solved problems',
+        brief='Liệt kê bài đã AC',
         usage='[handles] [+hardest] [+practice] [+contest] [+virtual] [+outof] [+team] [+tag..] [~tag..] [r>=rating] [r<=rating] [d>=[[dd]mm]yyyy] [d<[[dd]mm]yyyy] [c+marker..] [i+index..]',  # noqa: E501
     )
     async def stalk(self, ctx: commands.Context, *args: str) -> None:
@@ -205,8 +204,8 @@ class Codeforces(commands.Cog):
             return '\N{EN SPACE}'.join(data)
 
         def make_page(chunk: Sequence[cf.Submission]) -> tuple[str, discord.Embed]:
-            title = '{} solved problems by `{}`'.format(
-                'Hardest' if hardest else 'Recently', '`, `'.join(handles)
+            title = '{} bài đã giải bởi `{}`'.format(
+                'Khó nhất' if hardest else 'Gần đây', '`, `'.join(handles)
             )
             hist_str = '\n'.join(make_line(sub) for sub in chunk)
             embed = discord_common.cf_color_embed(description=hist_str)
@@ -223,7 +222,7 @@ class Codeforces(commands.Cog):
             ctx=ctx,
         )
 
-    @commands.command(brief='Create a mashup', usage='[handles] [+tag..] [~tag..]')
+    @commands.command(brief='Tạo mashup', usage='[handles] [+tag..] [~tag..]')
     async def mashup(self, ctx: commands.Context, *args: str) -> None:
         """Create a mashup contest.
 
@@ -259,7 +258,7 @@ class Codeforces(commands.Cog):
         ]
 
         if len(problems) < 4:
-            raise CodeforcesCogError('Problems not found within the search parameters')
+            raise CodeforcesCogError('Không tìm thấy đủ bài toán phù hợp với tham số tìm kiếm')
 
         problems.sort(
             key=lambda problem: (
@@ -285,9 +284,9 @@ class Codeforces(commands.Cog):
         )
         str_handles = '`, `'.join(handles)
         embed = discord_common.cf_color_embed(description=msg)
-        await ctx.send(f'Mashup contest for `{str_handles}`', embed=embed)
+        await ctx.send(f'Cuộc thi mashup cho `{str_handles}`', embed=embed)
 
-    @commands.hybrid_command(brief='Challenge')
+    @commands.hybrid_command(brief='Thử thách')
     @cf_common.user_guard(group='gitgud')
     async def gitgud(self, ctx: commands.Context, delta: int = 0) -> None:
         """Request a problem for gitgud points.
@@ -322,7 +321,7 @@ class Codeforces(commands.Cog):
 
         problems = list(filter(check, problems))
         if not problems:
-            raise CodeforcesCogError('No problem to assign')
+            raise CodeforcesCogError('Không có bài nào để phân công')
 
         problems.sort(
             key=lambda problem: (
@@ -335,7 +334,7 @@ class Codeforces(commands.Cog):
         choice = max(random.randrange(len(problems)) for _ in range(2))
         await self._gitgud(ctx, handle, problems[choice], delta)
 
-    @commands.hybrid_command(brief='Print user gitgud history')
+    @commands.hybrid_command(brief='In lịch sử gitgud của người dùng')
     async def gitlog(
         self, ctx: commands.Context, member: discord.Member | None = None
     ) -> None:
@@ -366,7 +365,7 @@ class Codeforces(commands.Cog):
         member = member or ctx.author
         data = await self.bot.user_db.gitlog(member.id)
         if not data:
-            raise CodeforcesCogError(f'{member.mention} has no gitgud history.')
+            raise CodeforcesCogError(f'{member.mention} chưa có lịch sử gitgud.')
 
         pages = [make_page(chunk) for chunk in paginator.chunkify(data, 7)]
         await paginator.paginate(
@@ -377,7 +376,7 @@ class Codeforces(commands.Cog):
             ctx=ctx,
         )
 
-    @commands.hybrid_command(brief='Report challenge completion')
+    @commands.hybrid_command(brief='Báo cáo hoàn thành thử thách')
     @cf_common.user_guard(group='gitgud')
     async def gotgud(self, ctx: commands.Context) -> None:
         (handle,) = await cf_common.resolve_handles(
@@ -386,14 +385,14 @@ class Codeforces(commands.Cog):
         user_id = ctx.message.author.id
         active = await self.bot.user_db.check_challenge(user_id)
         if not active:
-            raise CodeforcesCogError('You do not have an active challenge')
+            raise CodeforcesCogError('Bạn không có thử thách đang hoạt động')
 
         submissions = await cf.user.status(handle=handle)
         solved = {sub.problem.name for sub in submissions if sub.verdict == 'OK'}
 
         challenge_id, issue_time, name, contestId, index, delta = active
         if name not in solved:
-            raise CodeforcesCogError("You haven't completed your challenge.")
+            raise CodeforcesCogError('Bạn chưa hoàn thành thử thách của mình.')
 
         delta = _GITGUD_SCORE_DISTRIB[delta // 100 + 3]
         finish_time = int(datetime.datetime.now().timestamp())
@@ -403,19 +402,19 @@ class Codeforces(commands.Cog):
         if rc == 1:
             duration = cf_common.pretty_time_format(finish_time - issue_time)
             await ctx.send(
-                f'Challenge completed in {duration}. {handle} gained {delta} points.'
+                f'Thử thách hoàn thành trong {duration}. {handle} nhận được {delta} điểm.'
             )
         else:
-            await ctx.send('You have already claimed your points')
+            await ctx.send('Bạn đã nhận điểm cho thử thách này rồi')
 
-    @commands.hybrid_command(brief='Skip challenge')
+    @commands.hybrid_command(brief='Bỏ qua thử thách')
     @cf_common.user_guard(group='gitgud')
     async def nogud(self, ctx: commands.Context) -> None:
         await cf_common.resolve_handles(ctx, self.converter, ('!' + str(ctx.author),))
         user_id = ctx.message.author.id
         active = await self.bot.user_db.check_challenge(user_id)
         if not active:
-            raise CodeforcesCogError('You do not have an active challenge')
+            raise CodeforcesCogError('Bạn không có thử thách đang hoạt động')
 
         challenge_id, issue_time, name, contestId, index, delta = active
         finish_time = int(datetime.datetime.now().timestamp())
@@ -423,12 +422,12 @@ class Codeforces(commands.Cog):
             skip_time = cf_common.pretty_time_format(
                 issue_time + _GITGUD_NO_SKIP_TIME - finish_time
             )
-            await ctx.send(f'Think more. You can skip your challenge in {skip_time}.')
+            await ctx.send(f'Bạn hãy suy nghĩ thêm. Bạn có thể bỏ qua thử thách sau {skip_time}.')
             return
         await self.bot.user_db.skip_challenge(user_id, challenge_id, Gitgud.NOGUD)
-        await ctx.send('Challenge skipped.')
+        await ctx.send('Đã bỏ qua thử thách.')
 
-    @commands.hybrid_command(brief='Force skip a challenge')
+    @commands.hybrid_command(brief='Bắt buộc bỏ qua thử thách')
     @cf_common.user_guard(group='gitgud')
     @commands.has_any_role(constants.TLE_ADMIN, constants.TLE_MODERATOR)
     async def _nogud(self, ctx: commands.Context, member: discord.Member) -> None:
@@ -437,11 +436,11 @@ class Codeforces(commands.Cog):
             member.id, active[0], Gitgud.FORCED_NOGUD
         )
         if rc == 1:
-            await ctx.send('Challenge skip forced.')
+            await ctx.send('Đã bỏ qua thử thách (bắt buộc).')
         else:
-            await ctx.send('Failed to force challenge skip.')
+            await ctx.send('Không thể bắt buộc bỏ qua thử thách.')
 
-    @commands.command(brief='Recommend a contest', usage='[handles...] [+pattern...]')
+    @commands.command(brief='Gợi ý cuộc thi', usage='[handles...] [+pattern...]')
     async def vc(self, ctx: commands.Context, *args: str) -> None:
         """Recommends a contest based on Codeforces rating of the handle provided.
         e.g ;vc mblazev c1729 +global +hello +goodbye +avito"""
@@ -479,7 +478,7 @@ class Codeforces(commands.Cog):
         recommendations -= visited_contests
 
         if not recommendations:
-            raise CodeforcesCogError('Unable to recommend a contest')
+            raise CodeforcesCogError('Không thể gợi ý cuộc thi')
 
         rec_list = list(recommendations)
         random.shuffle(rec_list)
@@ -509,7 +508,7 @@ class Codeforces(commands.Cog):
         )
 
     @commands.command(
-        brief='Display unsolved rounds closest to completion', usage='[keywords]'
+        brief='Hiển thị vòng chưa giải gần hoàn thành nhất', usage='[keywords]'
     )
     async def fullsolve(self, ctx: commands.Context, *args: str) -> None:
         """Displays a list of contests, sorted by number of unsolved problems.
@@ -613,7 +612,7 @@ class Codeforces(commands.Cog):
                 right = r
         return round((left + right) / 2)
 
-    @commands.command(brief='Calculate team rating', usage='[handles] [+peak]')
+    @commands.command(brief='Tính xếp hạng đội', usage='[handles] [+peak]')
     async def teamrate(self, ctx: commands.Context, *args: str) -> None:
         """Provides the combined rating of the entire team. If +server is
         provided as the only handle, will display the rating of the entire
@@ -646,7 +645,7 @@ class Codeforces(commands.Cog):
                     try:
                         handle_counts[parse_str[0]] = int(parse_str[1])
                     except ValueError:
-                        raise CodeforcesCogError("Can't multiply by non-integer")
+                        raise CodeforcesCogError('Không thể nhân với số không nguyên')
                 else:
                     handle_counts[parse_str[0]] = 1
                 parsed_handles.append(parse_str[0])
@@ -681,7 +680,7 @@ class Codeforces(commands.Cog):
             ]
 
         if len(ratings) == 0:
-            raise CodeforcesCogError('No CF usernames with ratings passed in.')
+            raise CodeforcesCogError('Không có tên người dùng CF kèm xếp hạng được truyền vào.')
 
         left = -100.0
         right = 10000.0

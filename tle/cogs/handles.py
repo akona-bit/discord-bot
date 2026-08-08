@@ -103,8 +103,8 @@ def get_gudgitters_image(
     """return PIL image for rankings"""
     if not _HANDLE_IMAGES_AVAILABLE:
         raise HandleCogError(
-            'Image generation is unavailable because an optional dependency is missing.'
-            ' Install PyGObject and pycairo, then restart the bot.'
+            'Tạo ảnh không khả dụng vì thiếu thư viện phụ thuộc tùy chọn.'
+            ' Cài PyGObject và pycairo, sau đó khởi động lại bot.'
         )
 
     SMOKE_WHITE = (250, 250, 250)
@@ -179,7 +179,7 @@ def get_gudgitters_image(
     y: float = BORDER_MARGIN
 
     # draw header
-    draw_row('#', 'Name', 'Handle', 'Points', SMOKE_WHITE, y, bold=True)
+    draw_row('#', 'Tên', 'Handle', 'Điểm', SMOKE_WHITE, y, bold=True)
     y += LINE_HEIGHT * HEADER_SPACING
 
     for i, (pos, name, handle, rating, score) in enumerate(rankings):
@@ -288,7 +288,7 @@ class Handles(commands.Cog):
         rc = 0
         for chunk in paginator.chunkify(active_ids, 100):
             rc += await self.bot.user_db.update_status(gid, chunk)
-        await ctx.send(f'{rc} members active with handle')
+        await ctx.send(f'{rc} thành viên đang hoạt động với handle')
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member) -> None:

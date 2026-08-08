@@ -61,7 +61,7 @@ def _get_formatted_contest_desc(
 ) -> str:
     em = '\N{EN SPACE}'
     sq = '\N{WHITE SQUARE WITH UPPER RIGHT QUADRANT}'
-    desc = f'`{em}{id_str}{em}|{em}{start}{em}|{em}{duration.rjust(max_duration_len, em)}{em}|{em}`[`link {sq}`]({url} "Link to contest page")'  # noqa: E501
+    desc = f'`{em}{id_str}{em}|{em}{start}{em}|{em}{duration.rjust(max_duration_len, em)}{em}|{em}`[`link {sq}`]({url} "Liên kết tới trang cuộc thi")'  # noqa: E501
     return desc
 
 
@@ -234,7 +234,7 @@ class Contests(commands.Cog):
         empty_msg: str,
     ) -> None:
         if contests is None:
-            raise ContestCogError('Contest list not present')
+            raise ContestCogError('Danh sách cuộc thi không có sẵn')
         if len(contests) == 0:
             await ctx.send(embed=discord_common.embed_neutral(empty_msg))
             return
@@ -247,46 +247,46 @@ class Contests(commands.Cog):
             ctx=ctx,
         )
 
-    @commands.hybrid_group(brief='Commands for listing contests', fallback='show')
+    @commands.hybrid_group(brief='Lệnh liệt kê cuộc thi', fallback='show')
     async def clist(self, ctx: commands.Context) -> None:
         await ctx.send_help(ctx.command)
 
-    @clist.command(brief='List future contests')
+    @clist.command(brief='Liệt kê cuộc thi sắp tới')
     async def future(self, ctx: commands.Context) -> None:
         """List future contests on Codeforces."""
         await self._send_contest_list(
             ctx,
             self.future_contests,
-            title='Future contests on Codeforces',
-            empty_msg='No future contests scheduled',
+            title='Cuộc thi sắp tới trên Codeforces',
+            empty_msg='Chưa có cuộc thi sắp tới nào được lên lịch',
         )
 
-    @clist.command(brief='List active contests')
+    @clist.command(brief='Liệt kê cuộc thi đang diễn ra')
     async def active(self, ctx: commands.Context) -> None:
         """List active contests on Codeforces, namely those in coding phase,
         pending system test or in system test."""
         await self._send_contest_list(
             ctx,
             self.active_contests,
-            title='Active contests on Codeforces',
-            empty_msg='No contests currently active',
+            title='Cuộc thi đang diễn ra trên Codeforces',
+            empty_msg='Hiện không có cuộc thi nào đang diễn ra',
         )
 
-    @clist.command(brief='List recent finished contests')
+    @clist.command(brief='Liệt kê cuộc thi vừa kết thúc')
     async def finished(self, ctx: commands.Context) -> None:
         """List recently concluded contests on Codeforces."""
         await self._send_contest_list(
             ctx,
             self.finished_contests,
-            title='Recently finished contests on Codeforces',
-            empty_msg='No finished contests found',
+            title='Cuộc thi vừa kết thúc trên Codeforces',
+            empty_msg='Không tìm thấy cuộc thi đã kết thúc',
         )
 
-    @commands.hybrid_group(brief='Commands for contest reminders', fallback='show')
+    @commands.hybrid_group(brief='Lệnh nhắc nhở cuộc thi', fallback='show')
     async def remind(self, ctx: commands.Context) -> None:
         await ctx.send_help(ctx.command)
 
-    @remind.command(brief='Set reminder settings', with_app_command=False)
+    @remind.command(brief='Thiết lập nhắc nhở', with_app_command=False)
     @commands.has_role(constants.TLE_ADMIN)
     async def here(
         self, ctx: commands.Context, role: discord.Role, *before: int
@@ -294,9 +294,9 @@ class Contests(commands.Cog):
         """Sets reminder channel to current channel, role to the given role,
         and reminder times to the given values in minutes."""
         if not role.mentionable:
-            raise ContestCogError('The role for reminders must be mentionable')
+            raise ContestCogError('Role dùng cho nhắc nhở phải có thể được mention')
         if not before or any(before_mins <= 0 for before_mins in before):
-            raise ContestCogError('Please provide valid `before` values')
+            raise ContestCogError('Vui lòng cung cấp các giá trị `before` hợp lệ')
         before_sorted = sorted(before, reverse=True)
         await self.bot.user_db.set_reminder_settings(
             ctx.guild.id, ctx.channel.id, role.id, json.dumps(before_sorted)
@@ -306,14 +306,14 @@ class Contests(commands.Cog):
         )
         await self._reschedule_tasks(ctx.guild.id)
 
-    @remind.command(brief='Clear all reminder settings')
+    @remind.command(brief='Xóa cài đặt nhắc nhở')
     @commands.has_role(constants.TLE_ADMIN)
     async def clear(self, ctx: commands.Context) -> None:
         await self.bot.user_db.clear_reminder_settings(ctx.guild.id)
         await ctx.send(embed=discord_common.embed_success('Đã xóa cài đặt nhắc nhở'))
         await self._reschedule_tasks(ctx.guild.id)
 
-    @remind.command(brief='Show reminder settings')
+    @remind.command(brief='Hiển thị cài đặt nhắc nhở')
     async def settings(self, ctx: commands.Context) -> None:
         """Shows the role, channel and before time settings."""
         settings = await self.bot.user_db.get_reminder_settings(ctx.guild.id)
@@ -346,7 +346,7 @@ class Contests(commands.Cog):
             raise ContestCogError('Vai trò được dùng để nhắc không còn tồn tại.')
         return role
 
-    @remind.command(brief='Subscribe to contest reminders')
+    @remind.command(brief='Đăng ký nhận nhắc nhở cuộc thi')
     async def on(self, ctx: commands.Context) -> None:
         """Subscribes you to contest reminders. Use ';remind settings' to see
         the current settings.
@@ -365,7 +365,7 @@ class Contests(commands.Cog):
             )
         await ctx.send(embed=embed)
 
-    @remind.command(brief='Unsubscribe from contest reminders')
+    @remind.command(brief='Hủy đăng ký nhắc nhở cuộc thi')
     async def off(self, ctx: commands.Context) -> None:
         """Unsubscribes you from contest reminders."""
         role = await self._get_remind_role(ctx.guild)
@@ -526,9 +526,9 @@ class Contests(commands.Cog):
         assert contest.phase != 'BEFORE', f'Contest {contest.id} has not started.'
         embed = discord_common.cf_color_embed(title=contest.name, url=contest.url)
         phase = contest.phase.capitalize().replace('_', ' ')
-        embed.add_field(name='Phase', value=phase)
+        embed.add_field(name='Giai đoạn', value=phase)
         if ranklist.is_rated:
-            embed.add_field(name='Deltas', value=ranklist.deltas_status)
+            embed.add_field(name='Thay đổi điểm', value=ranklist.deltas_status)
         now = time.time()
         en = '\N{EN SPACE}'
         if contest.end_time > now:
@@ -538,16 +538,16 @@ class Contests(commands.Cog):
             remaining = cf_common.pretty_time_format(
                 contest.end_time - now, shorten=True
             )
-            msg = f'{elapsed} elapsed{en}|{en}{remaining} remaining'
-            embed.add_field(name='Tick tock', value=msg, inline=False)
+            msg = f'{elapsed} đã trôi{en}|{en}{remaining} còn lại'
+            embed.add_field(name='Thời gian', value=msg, inline=False)
         else:
             start = _contest_start_time_format(contest, dt.timezone.utc)
             duration = _contest_duration_format(contest)
             since = cf_common.pretty_time_format(
                 now - contest.end_time, only_most_significant=True
             )
-            msg = f'{start}{en}|{en}{duration}{en}|{en}Ended {since} ago'
-            embed.add_field(name='When', value=msg, inline=False)
+            msg = f'{start}{en}|{en}{duration}{en}|{en}Kết thúc {since} trước'
+            embed.add_field(name='Khi', value=msg, inline=False)
         return embed
 
     @staticmethod
@@ -570,7 +570,7 @@ class Contests(commands.Cog):
             embed.add_field(name='Tick tock', value=msg, inline=False)
         return embed
 
-    @commands.command(brief='Show ranklist for given handles and/or server members')
+    @commands.command(brief='Hiển thị bảng xếp hạng cho handles/thành viên')
     async def ranklist(
         self, ctx: commands.Context, contest_id: int, *args: str
     ) -> None:
@@ -667,7 +667,7 @@ class Contests(commands.Cog):
         )
 
     @commands.command(
-        brief='Start a rated vc.', usage='<contest_id> <@user1 @user2 ...>'
+        brief='Bắt đầu một rated VC.', usage='<contest_id> <@user1 @user2 ...>'}
     )
     async def ratedvc(
         self, ctx: commands.Context, contest_id: int, *members: discord.Member
@@ -879,7 +879,7 @@ class Contests(commands.Cog):
             await self._watch_rated_vc(rated_vc_id)
 
     @commands.hybrid_command(
-        brief='Unregister this user from an ongoing ratedvc', usage='@user'
+        brief='Hủy đăng ký người này khỏi rated VC đang diễn ra', usage='@user'
     )
     @commands.has_any_role(constants.TLE_ADMIN, constants.TLE_MODERATOR)
     async def _unregistervc(self, ctx: commands.Context, user: discord.Member) -> None:
@@ -894,27 +894,27 @@ class Contests(commands.Cog):
             )
         )
 
-    @commands.hybrid_command(brief='Set the rated vc channel to the current channel')
+    @commands.hybrid_command(brief='Đặt kênh rated VC thành kênh hiện tại')
     @commands.has_role(constants.TLE_ADMIN)
     async def set_ratedvc_channel(self, ctx: commands.Context) -> None:
         """Sets the rated vc channel to the current channel."""
         await self.bot.user_db.set_rated_vc_channel(ctx.guild.id, ctx.channel.id)
         await ctx.send(
-            embed=discord_common.embed_success('Rated VC channel saved successfully')
+            embed=discord_common.embed_success('Đã lưu kênh rated VC thành công')
         )
 
-    @commands.hybrid_command(brief='Get the rated vc channel')
+    @commands.hybrid_command(brief='Lấy kênh rated VC')
     async def get_ratedvc_channel(self, ctx: commands.Context) -> None:
         """Gets the rated vc channel."""
         channel_id = await self.bot.user_db.get_rated_vc_channel(ctx.guild.id)
         channel = ctx.guild.get_channel(channel_id)
         if channel is None:
-            raise ContestCogError('There is no rated vc channel')
-        embed = discord_common.embed_success('Current rated vc channel')
+            raise ContestCogError('Chưa có kênh rated VC')
+        embed = discord_common.embed_success('Kênh rated VC hiện tại')
         embed.add_field(name='Channel', value=channel.mention)
         await ctx.send(embed=embed)
 
-    @commands.hybrid_command(brief='Show vc ratings')
+    @commands.hybrid_command(brief='Hiển thị xếp hạng VC')
     async def vcratings(self, ctx: commands.Context) -> None:
         users = []
         for member_id, handle in await self.bot.user_db.get_handles_for_guild(
@@ -969,7 +969,7 @@ class Contests(commands.Cog):
         )
 
     @commands.command(
-        brief='Plot vc rating for a list of at most 5 users', usage='@user1 @user2 ..'
+        brief='Vẽ xếp hạng VC cho tối đa 5 người', usage='@user1 @user2 ..'
     )
     async def vcrating(self, ctx: commands.Context, *members: discord.Member) -> None:
         """Plots VC rating for at most 5 users."""
@@ -1018,7 +1018,7 @@ class Contests(commands.Cog):
         plt.legend(labels, loc='upper left', prop=gc.fontprop)
 
         discord_file = gc.get_current_figure_as_file()
-        embed = discord_common.cf_color_embed(title='VC rating graph')
+        embed = discord_common.cf_color_embed(title='Đồ thị xếp hạng VC')
         discord_common.attach_image(embed, discord_file)
         discord_common.set_author_footer(embed, ctx.author)
         await ctx.send(embed=embed, file=discord_file)

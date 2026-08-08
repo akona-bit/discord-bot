@@ -44,6 +44,22 @@ That’s it.
 The bot will appear online in your Discord server; use
 `;help` inside Discord to explore commands.
 
+### Deploying on Replit
+
+1. Create a new Python Repl and upload this repo.
+2. In Replit Secrets, add:
+   - `BOT_TOKEN`
+   - `LOGGING_COG_CHANNEL_ID`
+   - `OAUTH_CLIENT_ID`
+   - `OAUTH_CLIENT_SECRET`
+   - `OAUTH_REDIRECT_URI`
+3. Set `OAUTH_REDIRECT_URI` to your Replit public callback URL, for example:
+   `https://<your-repl-name>.<your-username>.repl.co/callback`
+4. Use the Replit run button, or set the run command to:
+   `python -m tle`
+
+When you use `;handle identify`, Codeforces will redirect back to your Replit app at the callback URL.
+
 ### Updating to a new release
 
 ```sh

@@ -54,11 +54,11 @@ class Starboard(commands.Cog):
     @staticmethod
     def prepare_embed(message: discord.Message, color: int) -> discord.Embed:
         embed = discord.Embed(color=color, timestamp=message.created_at)
-        embed.add_field(name='Channel', value=message.channel.mention)
-        embed.add_field(name='Jump to', value=f'[Original]({message.jump_url})')
+                embed.add_field(name='Kênh', value=message.channel.mention)
+                embed.add_field(name='Đi tới', value=f'[Gốc]({message.jump_url})')
 
         if message.content:
-            embed.add_field(name='Content', value=message.content, inline=False)
+                    embed.add_field(name='Nội dung', value=message.content, inline=False)
 
         if message.embeds:
             data = message.embeds[0]
@@ -71,7 +71,7 @@ class Starboard(commands.Cog):
                 embed.set_image(url=file.url)
             else:
                 embed.add_field(
-                    name='Attachment',
+                    name='Tệp đính kèm',
                     value=f'[{file.filename}]({file.url})',
                     inline=False,
                 )
@@ -117,7 +117,7 @@ class Starboard(commands.Cog):
             )
             self.logger.info(f'Added message {message.id} to starboard under {emoji}')
 
-    @commands.hybrid_group(brief='Starboard commands', fallback='show')
+    @commands.hybrid_group(brief='Lệnh Starboard', fallback='show')
     async def starboard(self, ctx: commands.Context) -> None:
         """Group for commands involving the starboard."""
         await ctx.send_help(ctx.command)

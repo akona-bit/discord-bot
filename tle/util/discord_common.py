@@ -51,7 +51,7 @@ def attach_image(embed: discord.Embed, img_file: discord.File) -> None:
 def set_author_footer(
     embed: discord.Embed, user: discord.Member | discord.User
 ) -> None:
-    embed.set_footer(text=f'Requested by {user}', icon_url=user.display_avatar.url)
+    embed.set_footer(text=f'Yêu cầu bởi {user}', icon_url=user.display_avatar.url)
 
 
 def get_role(guild: discord.Guild, role_identifier: str | int) -> discord.Role | None:
@@ -98,13 +98,13 @@ async def bot_error_handler(ctx: commands.Context, exception: Exception) -> None
     if isinstance(exception, db.DatabaseDisabledError):
         await ctx.send(
             embed=embed_alert(
-                'Sorry, the database is not available. Some features are disabled.'
+                'Xin lỗi, cơ sở dữ liệu hiện không có sẵn. Một số tính năng bị vô hiệu hóa.'
             )
         )
     elif isinstance(exception, commands.NoPrivateMessage):
-        await ctx.send(embed=embed_alert('Commands are disabled in private channels'))
+        await ctx.send(embed=embed_alert('Các lệnh bị vô hiệu hóa trong kênh riêng tư'))
     elif isinstance(exception, commands.DisabledCommand):
-        await ctx.send(embed=embed_alert('Sorry, this command is temporarily disabled'))
+        await ctx.send(embed=embed_alert('Xin lỗi, lệnh này tạm thời bị vô hiệu hóa'))
     elif isinstance(exception, (cf.CodeforcesApiError, commands.UserInputError)):
         await ctx.send(embed=embed_alert(exception))
     else:
@@ -134,7 +134,7 @@ def once(func: Callable[..., Any]) -> Callable[..., Any]:
 async def presence(bot: Any) -> None:
     await bot.change_presence(
         activity=discord.Activity(
-            type=discord.ActivityType.listening, name='your commands'
+        type=discord.ActivityType.listening, name='các lệnh của bạn'
         )
     )
     await asyncio.sleep(60)

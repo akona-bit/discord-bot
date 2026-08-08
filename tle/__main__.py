@@ -7,10 +7,14 @@ from os import environ
 from pathlib import Path
 from typing import Any
 
+from dotenv import load_dotenv
+from pathlib import Path as _Path
+load_dotenv(dotenv_path=_Path(__file__).resolve().parent.parent / '.env')
+
 import discord
 import seaborn as sns
 from discord.ext import commands
-from dotenv import load_dotenv
+from discord.ext.commands.errors import ExtensionFailed
 from matplotlib import pyplot as plt
 
 from tle import constants
@@ -85,7 +89,22 @@ class TLEBot(commands.Bot):
     async def setup_hook(self) -> None:
         cogs = [file.stem for file in Path('tle', 'cogs').glob('*.py')]
         for extension in cogs:
-            await self.load_extension(f'tle.cogs.{extension}')
+            try:
+                await self.load_extension(f'tle.cogs.{extension}')
+            except ExtensionFailed as exc:
+                cause = exc.__cause__
+                if isinstance(cause, ModuleNotFoundError):
+                    logging.warning(
+                        'Skipping extension %s because an optional dependency is missing: %s',
+                        extension,
+                        cause,
+                    )
+                    continue
+                logging.exception('Failed to load extension %s', extension)
+                raise
+            except Exception:
+                logging.exception('Failed to load extension %s', extension)
+                raise
         logging.info(f'Cogs loaded: {", ".join(self.cogs)}')
         await cf_common.initialize(self, self.nodb)
         if constants.OAUTH_CONFIGURED:

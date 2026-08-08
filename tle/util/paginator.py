@@ -104,7 +104,7 @@ async def paginate(
         raise NoPagesError()
     if len(pages) > 1 and set_pagenum_footers:
         for i, (_content, embed) in enumerate(pages):
-            embed.set_footer(text=f'Page {i + 1} / {len(pages)}')
+            embed.set_footer(text=f'Trang {i + 1} / {len(pages)}')
 
     content, embed = pages[0]
     if len(pages) == 1:

@@ -92,13 +92,13 @@ class DuelChallengeView(discord.ui.View):
         await interaction.response.edit_message(view=self)
         self.stop()
 
-    @discord.ui.button(label='Accept', style=discord.ButtonStyle.success)
+    @discord.ui.button(label='Chấp nhận', style=discord.ButtonStyle.success)
     async def accept_button(
         self, interaction: discord.Interaction, button: discord.ui.Button[Any]
     ) -> None:
         if interaction.user.id != self.challengee_id:
             await interaction.response.send_message(
-                'Only the challenged user can accept.',
+                'Chỉ người được thách đấu mới có thể chấp nhận.',
                 ephemeral=True,
             )
             return
@@ -110,8 +110,8 @@ class DuelChallengeView(discord.ui.View):
         channel = interaction.channel
 
         await channel.send(
-            f'Duel between {challenger.mention} and'
-            f' {challengee.mention} starting in 15 seconds!'
+            f'Trận đấu giữa {challenger.mention} và'
+            f' {challengee.mention} sẽ bắt đầu sau 15 giây!'
         )
         await asyncio.sleep(15)
 
@@ -119,8 +119,8 @@ class DuelChallengeView(discord.ui.View):
         rc = await self.bot.user_db.start_duel(self.duelid, start_time)
         if rc != 1:
             await channel.send(
-                f'Unable to start the duel between {challenger.mention}'
-                f' and {challengee.mention}.'
+                f'Không thể bắt đầu trận đấu giữa {challenger.mention}'
+                f' và {challengee.mention}.'
             )
             return
 
@@ -128,19 +128,19 @@ class DuelChallengeView(discord.ui.View):
         title = f'{problem.index}. {problem.name}'
         desc = self.bot.cf_cache.contest_cache.get_contest(problem.contestId).name
         embed = discord.Embed(title=title, url=problem.url, description=desc)
-        embed.add_field(name='Rating', value=problem.rating)
+        embed.add_field(name='Độ khó', value=problem.rating)
         await channel.send(
-            f'Starting duel: {challenger.mention} vs {challengee.mention}',
+            f'Bắt đầu trận đấu: {challenger.mention} vs {challengee.mention}',
             embed=embed,
         )
 
-    @discord.ui.button(label='Decline', style=discord.ButtonStyle.danger)
+    @discord.ui.button(label='Từ chối', style=discord.ButtonStyle.danger)
     async def decline_button(
         self, interaction: discord.Interaction, button: discord.ui.Button[Any]
     ) -> None:
         if interaction.user.id != self.challengee_id:
             await interaction.response.send_message(
-                'Only the challenged user can decline.',
+                'Chỉ người được thách đấu mới có thể từ chối.',
                 ephemeral=True,
             )
             return
@@ -151,20 +151,20 @@ class DuelChallengeView(discord.ui.View):
         challengee = interaction.guild.get_member(self.challengee_id)
         if rc:
             message = (
-                f'{challengee.mention} declined a challenge by {challenger.mention}.'
+                f'{challengee.mention} đã từ chối lời thách đấu của {challenger.mention}.'
             )
             embed = discord_common.embed_alert(message)
             await interaction.channel.send(embed=embed)
         else:
-            await interaction.channel.send('This duel has already been resolved.')
+            await interaction.channel.send('Trận đấu này đã được giải quyết rồi.')
 
-    @discord.ui.button(label='Withdraw', style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label='Rút', style=discord.ButtonStyle.secondary)
     async def withdraw_button(
         self, interaction: discord.Interaction, button: discord.ui.Button[Any]
     ) -> None:
         if interaction.user.id != self.challenger_id:
             await interaction.response.send_message(
-                'Only the challenger can withdraw.',
+                'Chỉ người thách đấu mới có thể rút.',
                 ephemeral=True,
             )
             return
@@ -175,12 +175,12 @@ class DuelChallengeView(discord.ui.View):
         challengee = interaction.guild.get_member(self.challengee_id)
         if rc:
             message = (
-                f'{challenger.mention} withdrew a challenge to {challengee.mention}.'
+                f'{challenger.mention} đã rút lời thách đấu tới {challengee.mention}.'
             )
             embed = discord_common.embed_alert(message)
             await interaction.channel.send(embed=embed)
         else:
-            await interaction.channel.send('This duel has already been resolved.')
+            await interaction.channel.send('Trận đấu này đã được giải quyết rồi.')
 
     async def on_timeout(self) -> None:
         for item in self.children:
@@ -195,8 +195,8 @@ class DuelChallengeView(discord.ui.View):
             challenger = self.message.guild.get_member(self.challenger_id)
             challengee = self.message.guild.get_member(self.challengee_id)
             message = (
-                f'{challenger.mention}, your request to duel'
-                f' {challengee.mention} has expired!'
+                f'{challenger.mention}, lời mời thi đấu tới'
+                f' {challengee.mention} đã hết hạn!'
             )
             embed = discord_common.embed_alert(message)
             await self.message.channel.send(embed=embed)
@@ -254,7 +254,7 @@ class Dueling(commands.Cog):
         )
         return embed
 
-    @commands.hybrid_group(brief='Duel commands', fallback='show')
+    @commands.hybrid_group(brief='Lệnh duel', fallback='show')
     async def duel(self, ctx: commands.Context) -> None:
         """Group for commands pertaining to duels"""
         await ctx.send_help(ctx.command)
@@ -265,25 +265,25 @@ class Dueling(commands.Cog):
         """Register a duelist"""
         rc = await self.bot.user_db.register_duelist(member.id)
         if rc == 0:
-            raise DuelCogError(f'{member.mention} is already a registered duelist')
-        await ctx.send(f'{member.mention} successfully registered as a duelist.')
+            raise DuelCogError(f'{member.mention} đã được đăng ký là duel thủ')
+        await ctx.send(f'{member.mention} đã được đăng ký thành duel thủ.')
 
-    @duel.command(brief='Register yourself as a duelist')
+    @duel.command(brief='Đăng ký bản thân làm duel thủ')
     @commands.check(check_if_allow_self_register)
     async def selfregister(self, ctx: commands.Context) -> None:
         """Register yourself as a duelist"""
         if not await self.bot.user_db.get_handle(ctx.author.id, ctx.guild.id):
             raise DuelCogError(
-                f'{ctx.author.mention}, you cannot register yourself'
-                ' as a duelist without setting your handle.'
+                f'{ctx.author.mention}, bạn không thể đăng ký làm duel thủ'
+                ' nếu chưa thiết lập handle.'
             )
         rc = await self.bot.user_db.register_duelist(ctx.author.id)
         if rc == 0:
-            raise DuelCogError(f'{ctx.author.mention} is already a registered duelist')
-        await ctx.send(f'{ctx.author.mention} successfully registered as a duelist')
+            raise DuelCogError(f'{ctx.author.mention} đã được đăng ký là duel thủ')
+        await ctx.send(f'{ctx.author.mention} đã được đăng ký thành duel thủ')
 
     @duel.command(
-        brief='Challenge to a duel',
+            brief='Thách đấu',
         usage='opponent [rating] [+tag..] [~tag..]',
         with_app_command=False,
     )
@@ -311,12 +311,12 @@ class Dueling(commands.Cog):
 
         if not await self.bot.user_db.is_duelist(challenger_id):
             raise DuelCogError(
-                f'{ctx.author.mention}, you are not a registered duelist!'
+                f'{ctx.author.mention}, bạn chưa được đăng ký là duel thủ!'
             )
         if not await self.bot.user_db.is_duelist(challengee_id):
-            raise DuelCogError(f'{opponent.mention} is not a registered duelist!')
+            raise DuelCogError(f'{opponent.mention} chưa được đăng ký là duel thủ!')
         if challenger_id == challengee_id:
-            raise DuelCogError(f'{ctx.author.mention}, you cannot challenge yourself!')
+            raise DuelCogError(f'{ctx.author.mention}, bạn không thể thách đấu chính mình!')
         if await self.bot.user_db.check_duel_challenge(challenger_id):
             raise DuelCogError(f'{ctx.author.mention}, you are currently in a duel!')
         if await self.bot.user_db.check_duel_challenge(challengee_id):
@@ -586,7 +586,7 @@ class Dueling(commands.Cog):
                 embed=embed,
             )
         else:
-            await ctx.send('Nobody solved the problem yet.')
+            await ctx.send('Chưa có ai giải bài này.')
 
     @duel.command(brief='Offer/Accept a draw')
     async def draw(self, ctx: commands.Context) -> None:
@@ -617,7 +617,7 @@ class Dueling(commands.Cog):
             return
 
         if self.draw_offers[duelid] == ctx.author.id:
-            await ctx.send(f"{ctx.author.mention}, you've already offered a draw.")
+            await ctx.send(f"{ctx.author.mention}, bạn đã đề nghị hòa rồi.")
             return
 
         offerer = ctx.guild.get_member(self.draw_offers[duelid])

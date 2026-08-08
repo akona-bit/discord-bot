@@ -13,11 +13,11 @@ def timed_command(
 ) -> Callable[..., Coroutine[Any, Any, None]]:
     @functools.wraps(coro)
     async def wrapper(cog: commands.Cog, ctx: commands.Context, *args: Any) -> None:
-        await ctx.send('Running...')
+        await ctx.send('Đang chạy...')
         begin = time.time()
         await coro(cog, ctx, *args)
         elapsed = time.time() - begin
-        await ctx.send(f'Completed in {elapsed:.2f} seconds')
+        await ctx.send(f'Hoàn thành trong {elapsed:.2f} giây')
 
     return wrapper
 
@@ -63,14 +63,14 @@ class CacheControl(commands.Cog):
                 contest_id_int
             )
         elif contest_id == 'all':
-            await ctx.send('This will take a while')
+            await ctx.send('Việc này sẽ mất một lúc')
             count = await self.bot.cf_cache.rating_changes_cache.fetch_all_contests()
         else:
-            await ctx.send('This may take a while')
+            await ctx.send('Việc này có thể mất một lúc')
             count = (
                 await self.bot.cf_cache.rating_changes_cache.fetch_missing_contests()
             )
-        await ctx.send(f'Done, fetched {count} changes and recached handle ratings')
+        await ctx.send(f'Xong, đã lấy {count} thay đổi và tái lưu bộ nhớ cache đánh giá người dùng')
 
     @cache.command(usage='contest_id|all')
     @commands.has_role(constants.TLE_ADMIN)
@@ -80,7 +80,7 @@ class CacheControl(commands.Cog):
         clears existing problems with the given contest id.
         """
         if contest_id == 'all':
-            await ctx.send('This will take a while')
+            await ctx.send('Việc này sẽ mất một lúc')
             count = await self.bot.cf_cache.problemset_cache.update_for_all()
         else:
             try:
@@ -90,7 +90,7 @@ class CacheControl(commands.Cog):
             count = await self.bot.cf_cache.problemset_cache.update_for_contest(
                 contest_id_int
             )
-        await ctx.send(f'Done, fetched {count} problems')
+        await ctx.send(f'Xong, đã lấy {count} bài toán')
 
 
 async def setup(bot: commands.Bot) -> None:

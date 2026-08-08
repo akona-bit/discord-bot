@@ -105,12 +105,15 @@ def decode_id_token(
     client_secret: str,
     client_id: str,
 ) -> dict[str, Any]:
+    # Codeforces token `iat` may differ slightly from local clock.
+    # Allow a small leeway to avoid "token is not yet valid" failures.
     return jwt.decode(
         id_token,
         client_secret,
         algorithms=['HS256'],
         audience=client_id,
         issuer=_CF_ISSUER,
+        leeway=60,
     )
 
 
