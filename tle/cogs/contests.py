@@ -111,7 +111,7 @@ async def _send_reminder_at(
         for label, value in zip(labels, values, strict=False)
         if value > 0
     )
-    desc = f'About to start in {before_str}'
+    desc = f'Sắp bắt đầu sau {before_str}'
     embed = discord_common.cf_color_embed(description=desc)
     for name, value in _get_embed_fields_from_contests(contests):
         embed.add_field(name=name, value=value)
@@ -302,7 +302,7 @@ class Contests(commands.Cog):
             ctx.guild.id, ctx.channel.id, role.id, json.dumps(before_sorted)
         )
         await ctx.send(
-            embed=discord_common.embed_success('Reminder settings saved successfully')
+            embed=discord_common.embed_success('Đã lưu cài đặt nhắc nhở thành công')
         )
         await self._reschedule_tasks(ctx.guild.id)
 
@@ -310,7 +310,7 @@ class Contests(commands.Cog):
     @commands.has_role(constants.TLE_ADMIN)
     async def clear(self, ctx: commands.Context) -> None:
         await self.bot.user_db.clear_reminder_settings(ctx.guild.id)
-        await ctx.send(embed=discord_common.embed_success('Reminder settings cleared'))
+        await ctx.send(embed=discord_common.embed_success('Đã xóa cài đặt nhắc nhở'))
         await self._reschedule_tasks(ctx.guild.id)
 
     @remind.command(brief='Show reminder settings')
@@ -318,32 +318,32 @@ class Contests(commands.Cog):
         """Shows the role, channel and before time settings."""
         settings = await self.bot.user_db.get_reminder_settings(ctx.guild.id)
         if settings is None:
-            await ctx.send(embed=discord_common.embed_neutral('Reminder not set'))
+            await ctx.send(embed=discord_common.embed_neutral('Chưa thiết lập nhắc nhở'))
             return
         channel_id, role_id, before = settings
         channel_id, role_id, before = int(channel_id), int(role_id), json.loads(before)
         channel, role = ctx.guild.get_channel(channel_id), ctx.guild.get_role(role_id)
         if channel is None:
             raise ContestCogError(
-                'The channel set for reminders is no longer available'
+                'Kênh được dùng để nhắc không còn tồn tại'
             )
         if role is None:
-            raise ContestCogError('The role set for reminders is no longer available')
+            raise ContestCogError('Vai trò được dùng để nhắc không còn tồn tại')
         before_str = ', '.join(str(before_mins) for before_mins in before)
-        embed = discord_common.embed_success('Current reminder settings')
-        embed.add_field(name='Channel', value=channel.mention)
-        embed.add_field(name='Role', value=role.mention)
-        embed.add_field(name='Before', value=f'At {before_str} mins before contest')
+        embed = discord_common.embed_success('Cài đặt nhắc nhở hiện tại')
+        embed.add_field(name='Kênh', value=channel.mention)
+        embed.add_field(name='Vai trò', value=role.mention)
+        embed.add_field(name='Trước', value=f'Trước cuộc thi {before_str} phút')
         await ctx.send(embed=embed)
 
     async def _get_remind_role(self, guild: discord.Guild) -> discord.Role:
         settings = await self.bot.user_db.get_reminder_settings(guild.id)
         if settings is None:
-            raise ContestCogError('Reminders are not enabled.')
+            raise ContestCogError('Nhắc nhở chưa được bật.')
         _, role_id, _ = settings
         role = guild.get_role(int(role_id))
         if role is None:
-            raise ContestCogError('The role set for reminders is no longer available.')
+            raise ContestCogError('Vai trò được dùng để nhắc không còn tồn tại.')
         return role
 
     @remind.command(brief='Subscribe to contest reminders')
@@ -354,14 +354,14 @@ class Contests(commands.Cog):
         role = await self._get_remind_role(ctx.guild)
         if role in ctx.author.roles:
             embed = discord_common.embed_neutral(
-                'You are already subscribed to contest reminders'
+                'Bạn đã đăng ký nhận nhắc nhở cuộc thi'
             )
         else:
             await ctx.author.add_roles(
-                role, reason='User subscribed to contest reminders'
+                role, reason='Người dùng đăng ký nhận nhắc nhở cuộc thi'
             )
             embed = discord_common.embed_success(
-                'Successfully subscribed to contest reminders'
+                'Đã đăng ký nhận nhắc nhở cuộc thi thành công'
             )
         await ctx.send(embed=embed)
 
@@ -371,14 +371,14 @@ class Contests(commands.Cog):
         role = await self._get_remind_role(ctx.guild)
         if role not in ctx.author.roles:
             embed = discord_common.embed_neutral(
-                'You are not subscribed to contest reminders'
+                'Bạn chưa đăng ký nhận nhắc nhở cuộc thi'
             )
         else:
             await ctx.author.remove_roles(
-                role, reason='User unsubscribed from contest reminders'
+                role, reason='Người dùng hủy đăng ký nhận nhắc nhở cuộc thi'
             )
             embed = discord_common.embed_success(
-                'Successfully unsubscribed from contest reminders'
+                'Đã hủy đăng ký nhận nhắc nhở cuộc thi thành công'
             )
         await ctx.send(embed=embed)
 
@@ -674,9 +674,9 @@ class Contests(commands.Cog):
     ) -> None:
         ratedvc_channel_id = await self.bot.user_db.get_rated_vc_channel(ctx.guild.id)
         if not ratedvc_channel_id or ctx.channel.id != ratedvc_channel_id:
-            raise ContestCogError('You must use this command in ratedvc channel.')
+            raise ContestCogError('Bạn phải dùng lệnh này trong kênh ratedvc.')
         if not members:
-            raise ContestCogError('Missing members')
+            raise ContestCogError('Thiếu thành viên')
         contest = self.bot.cf_cache.contest_cache.get_contest(contest_id)
         try:
             (await cf.contest.ratingChanges(contest_id=contest_id))[
@@ -684,9 +684,8 @@ class Contests(commands.Cog):
             ]
         except (cf.RatingChangesUnavailableError, IndexError):
             error = (
-                f'`{contest.name}` was not rated for at least'
-                f' {_MIN_RATED_CONTESTANTS_FOR_RATED_VC}'
-                ' contestants or the ratings changes are not published yet.'
+                f'`{contest.name}` chưa có ít nhất {_MIN_RATED_CONTESTANTS_FOR_RATED_VC} '
+                'thí sinh được xếp hạng hoặc dữ liệu thay đổi điểm chưa được công bố.'
             )
             raise ContestCogError(error)
 
@@ -700,15 +699,15 @@ class Contests(commands.Cog):
                     for member_id in intersection
                 ]
             )
-            error = f'{busy_members} are registered in ongoing ratedvcs.'
+            error = f'{busy_members} đã đăng ký trong các ratedvc đang diễn ra.'
             raise ContestCogError(error)
 
         handles = await cf_common.members_to_handles(members, ctx.guild.id)
         visited_contests = await cf_common.get_visited_contests(handles)
         if contest_id in visited_contests:
             raise ContestCogError(
-                f'Some of the handles: {", ".join(handles)}'
-                ' have submissions in the contest'
+                f'Một số handle: {", ".join(handles)}'
+                ' đã nộp bài trong cuộc thi'
             )
         start_time = time.time()
         finish_time = start_time + contest.durationSeconds + _RATED_VC_EXTRA_TIME
@@ -719,7 +718,7 @@ class Contests(commands.Cog):
             ctx.guild.id,
             [member.id for member in members],
         )
-        title = f'Starting {contest.name} for:'
+        title = f'Bắt đầu {contest.name} cho:'
         msg = '\n'.join(
             f'[{discord.utils.escape_markdown(handle)}]({cf.PROFILE_BASE_URL}{handle})'
             for handle in handles
@@ -729,10 +728,10 @@ class Contests(commands.Cog):
         )
         await ctx.send(embed=embed)
         embed = discord_common.embed_alert(
-            f'You have {int(finish_time - start_time) // 60}'
-            ' minutes to complete the vc!'
+            f'Bạn có {int(finish_time - start_time) // 60}'
+            ' phút để hoàn thành vc!'
         )
-        embed.set_footer(text='GL & HF')
+        embed.set_footer(text='Chúc may mắn!')
         await ctx.send(embed=embed)
 
     async def _make_vc_rating_changes_embed(
