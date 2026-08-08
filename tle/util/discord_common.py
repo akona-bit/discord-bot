@@ -105,6 +105,10 @@ async def bot_error_handler(ctx: commands.Context, exception: Exception) -> None
         await ctx.send(embed=embed_alert('Các lệnh bị vô hiệu hóa trong kênh riêng tư'))
     elif isinstance(exception, commands.DisabledCommand):
         await ctx.send(embed=embed_alert('Xin lỗi, lệnh này tạm thời bị vô hiệu hóa'))
+    elif isinstance(exception, commands.MissingRequiredArgument):
+        await ctx.send(
+            embed=embed_alert(f'Thiếu tham số bắt buộc: `{exception.param.name}`.')
+        )
     elif isinstance(exception, (cf.CodeforcesApiError, commands.UserInputError)):
         await ctx.send(embed=embed_alert(exception))
     else:
