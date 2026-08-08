@@ -4,25 +4,24 @@ import logging
 import os
 from logging.handlers import TimedRotatingFileHandler
 from os import environ
-from pathlib import Path
+from pathlib import Path, Path as _Path
 from typing import Any
 
 import aiohttp
 from aiohttp import web
-
 from dotenv import load_dotenv
-from pathlib import Path as _Path
+
 load_dotenv(dotenv_path=_Path(__file__).resolve().parent.parent / '.env')
 
-import discord
-import seaborn as sns
-from discord.ext import commands
-from discord.ext.commands.errors import ExtensionFailed
-from matplotlib import pyplot as plt
+import discord  # noqa: E402
+import seaborn as sns  # noqa: E402
+from discord.ext import commands  # noqa: E402
+from discord.ext.commands.errors import ExtensionFailed  # noqa: E402
+from matplotlib import pyplot as plt  # noqa: E402
 
-from tle import constants
-from tle.util import codeforces_common as cf_common, db, discord_common
-from tle.util.gist_backup import GistBackup
+from tle import constants  # noqa: E402
+from tle.util import codeforces_common as cf_common, db, discord_common  # noqa: E402
+from tle.util.gist_backup import GistBackup  # noqa: E402
 
 
 def setup() -> None:
@@ -101,7 +100,7 @@ class TLEBot(commands.Bot):
                 cause = exc.__cause__
                 if isinstance(cause, ModuleNotFoundError):
                     logging.warning(
-                        'Skipping extension %s because an optional dependency is missing: %s',
+                        'Skipping extension %s because an optional dependency is missing: %s',  # noqa: E501
                         extension,
                         cause,
                     )
@@ -137,9 +136,9 @@ class TLEBot(commands.Bot):
             self._keep_alive_task.cancel()
         if self._backup_task is not None:
             self._backup_task.cancel()
-        
+
         # Upload backup one last time before shutting down
-        logging.info("Shutting down... Performing final database backup.")
+        logging.info('Shutting down... Performing final database backup.')
         await GistBackup.upload(constants.USER_DB_FILE_PATH)
         if self.oauth_server is not None:
             await self.oauth_server.stop()
@@ -157,16 +156,16 @@ class TLEBot(commands.Bot):
     async def _backup_loop(self) -> None:
         """Periodically upload the database to GitHub Gist."""
         _BACKUP_INTERVAL = 60 * 60  # 1 hour
-        await asyncio.sleep(60) # Initial delay to let the bot start properly
-        
+        await asyncio.sleep(60)  # Initial delay to let the bot start properly
+
         while True:
             try:
-                logging.info("Running periodic database backup.")
+                logging.info('Running periodic database backup.')
                 await GistBackup.upload(constants.USER_DB_FILE_PATH)
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logging.error(f"Error in backup loop: {e}")
+                logging.error(f'Error in backup loop: {e}')
             await asyncio.sleep(_BACKUP_INTERVAL)
 
     async def _start_health_server(self, port: int) -> None:
@@ -194,13 +193,17 @@ class TLEBot(commands.Bot):
 
         # Ensure the URL ends with /
         ping_url = redirect_uri.rstrip('/') + '/'
-        logging.info('Self-ping enabled: will ping %s every %ds', ping_url, _SELF_PING_INTERVAL)
+        logging.info(
+            'Self-ping enabled: will ping %s every %ds', ping_url, _SELF_PING_INTERVAL
+        )
 
         await asyncio.sleep(30)  # Initial delay so the server is ready.
         async with aiohttp.ClientSession() as session:
             while True:
                 try:
-                    async with session.get(ping_url, timeout=aiohttp.ClientTimeout(total=15)) as resp:
+                    async with session.get(
+                        ping_url, timeout=aiohttp.ClientTimeout(total=15)
+                    ) as resp:
                         logging.debug('Self-ping %s -> %d', ping_url, resp.status)
                 except Exception as e:
                     logging.warning('Self-ping failed: %s', e)
@@ -265,4 +268,3 @@ def main() -> None:
 
 if __name__ == '__main__':
     main()
-

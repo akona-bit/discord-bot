@@ -5,7 +5,7 @@ import datetime as dt
 import html
 import io
 import logging
-from typing import Any, Set, Dict
+from typing import Any, Dict, Set
 
 try:
     import cairo
@@ -16,6 +16,7 @@ except ModuleNotFoundError as exc:
 else:
     try:
         import gi
+
         gi.require_version('Pango', '1.0')
         gi.require_version('PangoCairo', '1.0')
         from gi.repository import Pango, PangoCairo
@@ -214,10 +215,7 @@ def _make_profile_embed(
             f' **[{user.handle}]({user.url})**'
         )
     else:
-        desc = (
-            f'Handle của {member.mention} hiện là'
-            f' **[{user.handle}]({user.url})**'
-        )
+        desc = f'Handle của {member.mention} hiện là **[{user.handle}]({user.url})**'
     if user.rating is None:
         embed = discord.Embed(description=desc)
         embed.add_field(name='Điểm', value='Chưa xếp hạng', inline=True)
@@ -477,7 +475,7 @@ class Handles(commands.Cog):
             if not roles:
                 # Try to create the missing rank role automatically
                 try:
-                    rank2role = await self._ensure_roles_exist(guild, {user.rank.title})
+                    await self._ensure_roles_exist(guild, {user.rank.title})
                 except HandleCogError as e:
                     raise HandleCogError(
                         f'Lỗi khi đảm bảo vai trò cho rank `{user.rank.title}`: {e}'
@@ -485,7 +483,7 @@ class Handles(commands.Cog):
                 roles = [role for role in guild.roles if role.name == user.rank.title]
                 if not roles:
                     raise HandleCogError(
-                        f'Không tìm thấy và không thể tạo vai trò cho rank `{user.rank.title}` trên server.'
+                        f'Không tìm thấy và không thể tạo vai trò cho rank `{user.rank.title}` trên server.'  # noqa: E501
                     )
             role_to_assign = roles[0]
         await self.update_member_rank_role(
@@ -755,7 +753,9 @@ class Handles(commands.Cog):
         res = await self.bot.user_db.get_handles_for_guild(guild.id)
         await self._update_ranks(guild, res)
 
-    async def _ensure_roles_exist(self, guild: discord.Guild, required_roles: Set[str]) -> Dict[str, discord.Role]:
+    async def _ensure_roles_exist(
+        self, guild: discord.Guild, required_roles: Set[str]
+    ) -> Dict[str, discord.Role]:
         """Ensure that roles for each rank in `required_roles` exist in the guild.
 
         Creates missing roles using the color from cf.RATED_RANKS when available.
@@ -770,18 +770,24 @@ class Handles(commands.Cog):
         for rank_title in missing_roles:
             # Find corresponding rank coloring from cf.RATED_RANKS
             rank_obj = next((r for r in cf.RATED_RANKS if r.title == rank_title), None)
-            color_int = rank_obj.color_embed if rank_obj and rank_obj.color_embed else constants._DEFAULT_COLOR
+            color_int = (
+                rank_obj.color_embed
+                if rank_obj and rank_obj.color_embed
+                else constants._DEFAULT_COLOR
+            )
             try:
-                new_role = await guild.create_role(
+                await guild.create_role(
                     name=rank_title,
                     color=discord.Color(color_int),
                     mentionable=True,
                     reason='Auto-created rank role by bot',
                 )
-                self.logger.info(f'Created role {rank_title} in guild {guild.name} ({guild.id})')
+                self.logger.info(
+                    f'Created role {rank_title} in guild {guild.name} ({guild.id})'
+                )
             except discord.Forbidden:
                 raise HandleCogError(
-                    f'Bot không có quyền tạo vai trò `{rank_title}`. Vui lòng cấp quyền Manage Roles cho bot.'
+                    f'Bot không có quyền tạo vai trò `{rank_title}`. Vui lòng cấp quyền Manage Roles cho bot.'  # noqa: E501
                 )
             except discord.HTTPException as e:
                 raise HandleCogError(f'Không tạo được vai trò `{rank_title}`: {e}')
@@ -814,12 +820,14 @@ class Handles(commands.Cog):
             rank2role = await self._ensure_roles_exist(guild, required_roles)
         except HandleCogError:
             # Rebuild current mapping and report missing if creation failed
-            rank2role = {role.name: role for role in guild.roles if role.name in required_roles}
+            rank2role = {
+                role.name: role for role in guild.roles if role.name in required_roles
+            }
             missing_roles = required_roles - rank2role.keys()
             roles_str = ', '.join(f'`{role}`' for role in missing_roles)
             plural = 's' if len(missing_roles) > 1 else ''
             raise HandleCogError(
-                f'Không tìm thấy vai trò cho rank{plural} {roles_str} trên server và bot không thể tạo chúng. Hãy cấp quyền Manage Roles cho bot hoặc tạo các vai trò này thủ công.'
+                f'Không tìm thấy vai trò cho rank{plural} {roles_str} trên server và bot không thể tạo chúng. Hãy cấp quyền Manage Roles cho bot hoặc tạo các vai trò này thủ công.'  # noqa: E501
             )
 
         for member, user in zip(members, users, strict=False):
@@ -987,9 +995,13 @@ class Handles(commands.Cog):
         elif arg == 'off':
             rc = await self.bot.user_db.clear_rankup_channel(ctx.guild.id)
             if not rc:
-                raise HandleCogError('Đăng tự động thông báo thay đổi hạng đã bị tắt từ trước.')
+                raise HandleCogError(
+                    'Đăng tự động thông báo thay đổi hạng đã bị tắt từ trước.'
+                )
             await ctx.send(
-                embed=discord_common.embed_success('Đã tắt đăng tự động thông báo thay đổi hạng.')
+                embed=discord_common.embed_success(
+                    'Đã tắt đăng tự động thông báo thay đổi hạng.'
+                )
             )
         else:
             try:
@@ -1140,20 +1152,17 @@ class Handles(commands.Cog):
         # Grant the Trusted role
         try:
             await target_user.add_roles(
-                trusted_role, reason=f'Giới thiệu bởi {ctx.author.name} ({ctx.author.id})'
+                trusted_role,
+                reason=f'Giới thiệu bởi {ctx.author.name} ({ctx.author.id})',
             )
             await ctx.send(
                 f'Đã cấp vai Trusted cho {target_user.mention}'
                 f' bởi {ctx.author.mention}.'
             )
         except discord.Forbidden:
-            raise HandleCogError(
-                f"Không có quyền để gán vai '{trusted_role_name}'."
-            )
+            raise HandleCogError(f"Không có quyền để gán vai '{trusted_role_name}'.")
         except discord.HTTPException as e:
-            raise HandleCogError(
-                f'Gán vai thất bại do lỗi: {e}'
-            )
+            raise HandleCogError(f'Gán vai thất bại do lỗi: {e}')
 
     @handle.command(brief='Grant Trusted role to old members without Purgatory role.')
     @commands.has_role(constants.TLE_ADMIN)

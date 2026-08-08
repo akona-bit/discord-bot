@@ -170,7 +170,9 @@ class Starboard(commands.Cog):
         clr = int(color, 16)
         await self.bot.user_db.update_starboard_color(ctx.guild.id, emoji, clr)
         await ctx.send(
-            embed=discord_common.embed_success(f'Đã cập nhật màu cho {emoji} thành {hex(clr)}')
+            embed=discord_common.embed_success(
+                f'Đã cập nhật màu cho {emoji} thành {hex(clr)}'
+            )
         )
 
     @starboard.command(brief='Set starboard channel (and optional color) for an emoji')
@@ -188,9 +190,7 @@ class Starboard(commands.Cog):
     async def clear(self, ctx: commands.Context, emoji: str) -> None:
         """Remove the starboard channel (and color) setting for an emoji."""
         await self.bot.user_db.clear_starboard_channel(ctx.guild.id, emoji)
-        await ctx.send(
-            embed=discord_common.embed_success(f'Đã xóa kênh cho {emoji}')
-        )
+        await ctx.send(embed=discord_common.embed_success(f'Đã xóa kênh cho {emoji}'))
 
     @starboard.command(brief='Remove a message from starboard')
     @commands.has_role(constants.TLE_ADMIN)

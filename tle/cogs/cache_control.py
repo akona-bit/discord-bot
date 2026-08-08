@@ -70,7 +70,9 @@ class CacheControl(commands.Cog):
             count = (
                 await self.bot.cf_cache.rating_changes_cache.fetch_missing_contests()
             )
-        await ctx.send(f'Xong, đã lấy {count} thay đổi và tái lưu bộ nhớ cache đánh giá người dùng')
+        await ctx.send(
+            f'Xong, đã lấy {count} thay đổi và tái lưu bộ nhớ cache đánh giá người dùng'
+        )
 
     @cache.command(usage='contest_id|all')
     @commands.has_role(constants.TLE_ADMIN)

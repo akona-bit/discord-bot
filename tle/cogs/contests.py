@@ -318,15 +318,15 @@ class Contests(commands.Cog):
         """Shows the role, channel and before time settings."""
         settings = await self.bot.user_db.get_reminder_settings(ctx.guild.id)
         if settings is None:
-            await ctx.send(embed=discord_common.embed_neutral('Chưa thiết lập nhắc nhở'))
+            await ctx.send(
+                embed=discord_common.embed_neutral('Chưa thiết lập nhắc nhở')
+            )
             return
         channel_id, role_id, before = settings
         channel_id, role_id, before = int(channel_id), int(role_id), json.loads(before)
         channel, role = ctx.guild.get_channel(channel_id), ctx.guild.get_role(role_id)
         if channel is None:
-            raise ContestCogError(
-                'Kênh được dùng để nhắc không còn tồn tại'
-            )
+            raise ContestCogError('Kênh được dùng để nhắc không còn tồn tại')
         if role is None:
             raise ContestCogError('Vai trò được dùng để nhắc không còn tồn tại')
         before_str = ', '.join(str(before_mins) for before_mins in before)
@@ -684,7 +684,7 @@ class Contests(commands.Cog):
             ]
         except (cf.RatingChangesUnavailableError, IndexError):
             error = (
-                f'`{contest.name}` chưa có ít nhất {_MIN_RATED_CONTESTANTS_FOR_RATED_VC} '
+                f'`{contest.name}` chưa có ít nhất {_MIN_RATED_CONTESTANTS_FOR_RATED_VC} '  # noqa: E501
                 'thí sinh được xếp hạng hoặc dữ liệu thay đổi điểm chưa được công bố.'
             )
             raise ContestCogError(error)
@@ -706,8 +706,7 @@ class Contests(commands.Cog):
         visited_contests = await cf_common.get_visited_contests(handles)
         if contest_id in visited_contests:
             raise ContestCogError(
-                f'Một số handle: {", ".join(handles)}'
-                ' đã nộp bài trong cuộc thi'
+                f'Một số handle: {", ".join(handles)} đã nộp bài trong cuộc thi'
             )
         start_time = time.time()
         finish_time = start_time + contest.durationSeconds + _RATED_VC_EXTRA_TIME
@@ -728,8 +727,7 @@ class Contests(commands.Cog):
         )
         await ctx.send(embed=embed)
         embed = discord_common.embed_alert(
-            f'Bạn có {int(finish_time - start_time) // 60}'
-            ' phút để hoàn thành vc!'
+            f'Bạn có {int(finish_time - start_time) // 60} phút để hoàn thành vc!'
         )
         embed.set_footer(text='Chúc may mắn!')
         await ctx.send(embed=embed)

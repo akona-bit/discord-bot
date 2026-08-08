@@ -98,7 +98,7 @@ async def bot_error_handler(ctx: commands.Context, exception: Exception) -> None
     if isinstance(exception, db.DatabaseDisabledError):
         await ctx.send(
             embed=embed_alert(
-                'Xin lỗi, cơ sở dữ liệu hiện không có sẵn. Một số tính năng bị vô hiệu hóa.'
+                'Xin lỗi, cơ sở dữ liệu hiện không có sẵn. Một số tính năng bị vô hiệu hóa.'  # noqa: E501
             )
         )
     elif isinstance(exception, commands.NoPrivateMessage):
@@ -134,7 +134,7 @@ def once(func: Callable[..., Any]) -> Callable[..., Any]:
 async def presence(bot: Any) -> None:
     await bot.change_presence(
         activity=discord.Activity(
-        type=discord.ActivityType.listening, name='các lệnh của bạn'
+            type=discord.ActivityType.listening, name='các lệnh của bạn'
         )
     )
     await asyncio.sleep(60)

@@ -84,8 +84,7 @@ class Meta(commands.Cog):
     async def uptime(self, ctx: commands.Context) -> None:
         """Trả về thời gian bot đã chạy."""
         await ctx.send(
-            'TLE đã chạy trong '
-            + pretty_time_format(time.time() - self.start_time)
+            'TLE đã chạy trong ' + pretty_time_format(time.time() - self.start_time)
         )
 
     @meta.command(brief='Liệt kê server bot')

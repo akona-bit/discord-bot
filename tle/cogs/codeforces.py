@@ -38,7 +38,7 @@ class Codeforces(commands.Cog):
 
         if delta is not None and abs(delta) > _GITGUD_MAX_ABS_DELTA_VALUE:
             raise CodeforcesCogError(
-                f'Delta phải nằm trong khoảng -{_GITGUD_MAX_ABS_DELTA_VALUE} đến {_GITGUD_MAX_ABS_DELTA_VALUE}.'
+                f'Delta phải nằm trong khoảng -{_GITGUD_MAX_ABS_DELTA_VALUE} đến {_GITGUD_MAX_ABS_DELTA_VALUE}.'  # noqa: E501
             )
 
         user_id = ctx.message.author.id
@@ -94,7 +94,9 @@ class Codeforces(commands.Cog):
         ]
 
         if not problems:
-            raise CodeforcesCogError('Không tìm thấy bài toán phù hợp với tham số tìm kiếm')
+            raise CodeforcesCogError(
+                'Không tìm thấy bài toán phù hợp với tham số tìm kiếm'
+            )
 
         problems.sort(
             key=lambda problem: (
@@ -143,7 +145,9 @@ class Codeforces(commands.Cog):
         ]
 
         if not problems:
-            raise CodeforcesCogError('Không tìm thấy bài toán phù hợp với tham số tìm kiếm')
+            raise CodeforcesCogError(
+                'Không tìm thấy bài toán phù hợp với tham số tìm kiếm'
+            )
 
         problems.sort(
             key=lambda problem: (
@@ -258,7 +262,9 @@ class Codeforces(commands.Cog):
         ]
 
         if len(problems) < 4:
-            raise CodeforcesCogError('Không tìm thấy đủ bài toán phù hợp với tham số tìm kiếm')
+            raise CodeforcesCogError(
+                'Không tìm thấy đủ bài toán phù hợp với tham số tìm kiếm'
+            )
 
         problems.sort(
             key=lambda problem: (
@@ -402,7 +408,7 @@ class Codeforces(commands.Cog):
         if rc == 1:
             duration = cf_common.pretty_time_format(finish_time - issue_time)
             await ctx.send(
-                f'Thử thách hoàn thành trong {duration}. {handle} nhận được {delta} điểm.'
+                f'Thử thách hoàn thành trong {duration}. {handle} nhận được {delta} điểm.'  # noqa: E501
             )
         else:
             await ctx.send('Bạn đã nhận điểm cho thử thách này rồi')
@@ -422,7 +428,9 @@ class Codeforces(commands.Cog):
             skip_time = cf_common.pretty_time_format(
                 issue_time + _GITGUD_NO_SKIP_TIME - finish_time
             )
-            await ctx.send(f'Bạn hãy suy nghĩ thêm. Bạn có thể bỏ qua thử thách sau {skip_time}.')
+            await ctx.send(
+                f'Bạn hãy suy nghĩ thêm. Bạn có thể bỏ qua thử thách sau {skip_time}.'
+            )
             return
         await self.bot.user_db.skip_challenge(user_id, challenge_id, Gitgud.NOGUD)
         await ctx.send('Đã bỏ qua thử thách.')
@@ -680,7 +688,9 @@ class Codeforces(commands.Cog):
             ]
 
         if len(ratings) == 0:
-            raise CodeforcesCogError('Không có tên người dùng CF kèm xếp hạng được truyền vào.')
+            raise CodeforcesCogError(
+                'Không có tên người dùng CF kèm xếp hạng được truyền vào.'
+            )
 
         left = -100.0
         right = 10000.0
