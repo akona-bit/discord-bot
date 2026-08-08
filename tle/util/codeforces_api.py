@@ -511,7 +511,7 @@ class contest:
         # anonymous GET requests with only contestId for non-admin users.
         try:
             resp = await _query_api_get('contest.standings', {'contestId': contest_id})
-        except TrueApiError:
+        except CodeforcesApiError:
             # Fallback to POST with requested parameters if GET fails
             params = {'contestId': contest_id}
             if from_ is not None:

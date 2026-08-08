@@ -145,12 +145,17 @@ class OAuthServer:
     async def start(self) -> None:
         self._session = aiohttp.ClientSession()
         app = web.Application()
+        app.router.add_get('/', self._handle_health)
         app.router.add_get('/callback', self._handle_callback)
         self._runner = web.AppRunner(app)
         await self._runner.setup()
         site = web.TCPSite(self._runner, '0.0.0.0', self.port)
         await site.start()
         logger.info('OAuth callback server listening on port %d', self.port)
+
+    @staticmethod
+    async def _handle_health(_request: web.Request) -> web.Response:
+        return web.json_response({'status': 'ok'})
 
     async def stop(self) -> None:
         if self._runner:

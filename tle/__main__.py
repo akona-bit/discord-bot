@@ -7,6 +7,9 @@ from os import environ
 from pathlib import Path
 from typing import Any
 
+import aiohttp
+from aiohttp import web
+
 from dotenv import load_dotenv
 from pathlib import Path as _Path
 load_dotenv(dotenv_path=_Path(__file__).resolve().parent.parent / '.env')
@@ -103,8 +106,7 @@ class TLEBot(commands.Bot):
                 logging.exception('Failed to load extension %s', extension)
                 raise
             except Exception:
-                logging.exception('Failed to load extension %s', extension)
-                raise
+                logging.exception('Failed to load extension %s — skipping', extension)
         logging.info(f'Cogs loaded: {", ".join(self.cogs)}')
         await cf_common.initialize(self, self.nodb)
         if constants.OAUTH_CONFIGURED:
@@ -116,6 +118,9 @@ class TLEBot(commands.Bot):
             )
             await self.oauth_server.start()
             logging.info('OAuth callback server started')
+        else:
+            # Start a minimal health-check server so Render gets 200 OK.
+            await self._start_health_server(constants.OAUTH_SERVER_PORT)
         await self.tree.sync()
         logging.info('Slash commands synced')
 
@@ -132,6 +137,20 @@ class TLEBot(commands.Bot):
         if cf_cache is not None:
             await cf_cache.conn.close()
         await super().close()
+
+    async def _start_health_server(self, port: int) -> None:
+        """Start a minimal HTTP server with only a health-check endpoint."""
+
+        async def _health(_request: web.Request) -> web.Response:
+            return web.json_response({'status': 'ok'})
+
+        app = web.Application()
+        app.router.add_get('/', _health)
+        self._health_runner = web.AppRunner(app)
+        await self._health_runner.setup()
+        site = web.TCPSite(self._health_runner, '0.0.0.0', port)
+        await site.start()
+        logging.info('Health-check server listening on port %d', port)
 
 
 def main() -> None:
