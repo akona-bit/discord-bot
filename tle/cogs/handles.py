@@ -475,22 +475,22 @@ class Handles(commands.Cog):
         else:
             roles = [role for role in guild.roles if role.name == user.rank.title]
             if not roles:
-                    # Try to create the missing rank role automatically
-                    try:
-                        rank2role = await self._ensure_roles_exist(guild, {user.rank.title})
-                    except HandleCogError as e:
-                        raise HandleCogError(
-                            f'Lỗi khi đảm bảo vai trò cho rank `{user.rank.title}`: {e}'
-                        )
-                    roles = [role for role in guild.roles if role.name == user.rank.title]
-                    if not roles:
-                        raise HandleCogError(
-                            f'Không tìm thấy và không thể tạo vai trò cho rank `{user.rank.title}` trên server.'
-                        )
-                role_to_assign = roles[0]
-            await self.update_member_rank_role(
-                member, role_to_assign, reason='New handle set for user'
-            )
+                # Try to create the missing rank role automatically
+                try:
+                    rank2role = await self._ensure_roles_exist(guild, {user.rank.title})
+                except HandleCogError as e:
+                    raise HandleCogError(
+                        f'Lỗi khi đảm bảo vai trò cho rank `{user.rank.title}`: {e}'
+                    )
+                roles = [role for role in guild.roles if role.name == user.rank.title]
+                if not roles:
+                    raise HandleCogError(
+                        f'Không tìm thấy và không thể tạo vai trò cho rank `{user.rank.title}` trên server.'
+                    )
+            role_to_assign = roles[0]
+        await self.update_member_rank_role(
+            member, role_to_assign, reason='New handle set for user'
+        )
 
     async def _set(
         self, ctx: commands.Context, member: discord.Member, user: cf.User
