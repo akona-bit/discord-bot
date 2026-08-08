@@ -5,7 +5,7 @@ import datetime as dt
 import html
 import io
 import logging
-from typing import Any
+from typing import Any, Set, Dict
 
 try:
     import cairo
@@ -755,7 +755,7 @@ class Handles(commands.Cog):
         res = await self.bot.user_db.get_handles_for_guild(guild.id)
         await self._update_ranks(guild, res)
 
-    async def _ensure_roles_exist(self, guild: discord.Guild, required_roles: set[str]) -> dict[str, discord.Role]:
+    async def _ensure_roles_exist(self, guild: discord.Guild, required_roles: Set[str]) -> Dict[str, discord.Role]:
         """Ensure that roles for each rank in `required_roles` exist in the guild.
 
         Creates missing roles using the color from cf.RATED_RANKS when available.
