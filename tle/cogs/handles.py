@@ -342,11 +342,12 @@ class Handles(commands.Cog):
         )
         self.logger.info(f'All guilds updated for contest {contest.id}.')
 
-    @commands.hybrid_group(
-        brief='Commands that have to do with handles', fallback='show'
+    @commands.group(
+        brief='Thông tin về handle',
+        invoke_without_command=True,
     )
     async def handle(self, ctx: commands.Context) -> None:
-        """Change or collect information about specific handles on Codeforces"""
+        """Thay đổi hoặc thu thập thông tin về các handle Codeforces cụ thể"""
         await ctx.send_help(ctx.command)
 
     async def maybe_add_trusted_role(self, member: discord.Member) -> None:
@@ -448,7 +449,7 @@ class Handles(commands.Cog):
     async def set(
         self, ctx: commands.Context, member: discord.Member, handle: str
     ) -> None:
-        """Set Codeforces handle of a user."""
+        """Đặt handle Codeforces cho một người dùng."""
         # CF API returns correct handle ignoring case, update to it
         (user,) = await cf.user.info(handles=[handle])
         await self._set(ctx, member, user)
@@ -497,9 +498,9 @@ class Handles(commands.Cog):
 
     @handle.command(brief='Identify yourself')
     async def identify(self, ctx: commands.Context) -> None:
-        """Link your Codeforces account via OAuth.
+        """Liên kết tài khoản Codeforces của bạn qua OAuth.
 
-        Opens a Codeforces authorization link so you can verify your handle.
+        Mở đường link xác thực Codeforces để bạn có thể xác nhận handle của mình.
         """
         if not constants.OAUTH_CONFIGURED:
             raise HandleCogError(
@@ -552,21 +553,24 @@ class Handles(commands.Cog):
 
     @handle.command(brief='Get handle by Discord username')
     async def get(self, ctx: commands.Context, member: discord.Member) -> None:
-        """Show Codeforces handle of a user."""
+        """Hiển thị handle Codeforces của một người dùng."""
         handle = await self.bot.user_db.get_handle(member.id, ctx.guild.id)
         if not handle:
-            raise HandleCogError(f'Không tìm thấy handle cho {member.mention} trong cơ sở dữ liệu')
+            raise HandleCogError(
+                f'Không tìm thấy handle cho {member.mention} trong cơ sở dữ liệu'
+            )
         user = await self.bot.user_db.fetch_cf_user(handle)
         embed = _make_profile_embed(member, user, mode='get')
         await ctx.send(embed=embed)
 
     @handle.command(brief='Get Discord username by cf handle')
     async def rget(self, ctx: commands.Context, handle: str) -> None:
-        """Show Discord username of a cf handle."""
+        """Hiển thị tài khoản Discord dựa trên handle Codeforces."""
         user_id = await self.bot.user_db.get_user_id(handle, ctx.guild.id)
         if not user_id:
             raise HandleCogError(
-                f'Không tìm thấy tài khoản Discord cho handle `{handle}` trong cơ sở dữ liệu'
+                f'Không tìm thấy tài khoản Discord cho handle `{handle}` '
+                'trong cơ sở dữ liệu'
             )
         user = await self.bot.user_db.fetch_cf_user(handle)
         member = ctx.guild.get_member(user_id)
@@ -578,7 +582,7 @@ class Handles(commands.Cog):
     @handle.command(brief='Unlink handle', aliases=['unlink'])
     @commands.has_any_role(constants.TLE_ADMIN, constants.TLE_MODERATOR)
     async def remove(self, ctx: commands.Context, handle: str) -> None:
-        """Remove Codeforces handle of a user."""
+        """Xóa liên kết handle Codeforces của người dùng."""
         (handle,) = await cf_common.resolve_handles(ctx, self.converter, [handle])
         user_id = await self.bot.user_db.get_user_id(handle, ctx.guild.id)
         if user_id is None:
@@ -927,7 +931,8 @@ class Handles(commands.Cog):
             embeds.append(embed)
 
         top_rating_increases_embed = discord.Embed(
-            description='\n'.join(top_increases_str) or 'Không có ai được cộng điểm (delta dương) cả :('
+            description='\n'.join(top_increases_str)
+            or 'Không có ai được cộng điểm (delta dương) cả :('
         )
         top_rating_increases_embed.set_author(name='Top tăng điểm nhiều nhất')
 

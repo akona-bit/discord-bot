@@ -301,22 +301,19 @@ class Graphs(commands.Cog):
         self.bot: commands.Bot = bot
         self.converter: commands.MemberConverter = commands.MemberConverter()
 
-    @commands.hybrid_group(
-        brief='Graphs for analyzing Codeforces activity', fallback='show'
+    @commands.group(
+        brief='Vẽ biểu đồ.',
+        invoke_without_command=True,
     )
     async def plot(self, ctx: commands.Context) -> None:
-        """Plot various graphs. Wherever Codeforces handles are accepted it is
-        possible to use a server member's name instead by prefixing it with
-        '!', for name with spaces use "!name with spaces" (with quotes)."""
-        await ctx.send_help('plot')
+        """Vẽ các loại biểu đồ. Ở những lệnh yêu cầu handle Codeforces,
+        bạn có thể dùng tên của thành viên trong server bằng cách thêm dấu '!' ở trước.
+        Với tên có khoảng trắng, dùng "!tên có khoảng trắng" (bên trong ngoặc kép)."""
+        await ctx.send_help(ctx.command)
 
-    @plot.command(
-        brief='Plot Codeforces rating graph',
-        usage='[+zoom] [+number] [+peak] [handles...] [d>=[[dd]mm]yyyy] [d<[[dd]mm]yyyy]',  # noqa: E501
-        with_app_command=False,
-    )
+    @plot.command(brief='Vẽ biểu đồ rating Codeforces', usage='[handles]')
     async def rating(self, ctx: commands.Context, *args: str) -> None:
-        """Plots Codeforces rating graph for the handles provided."""
+        """Vẽ biểu đồ rating Codeforces cho các handles được cung cấp."""
 
         (zoom, number, peak), remaining = cf_common.filter_flags(
             args, ['+zoom', '+number', '+peak']
@@ -390,8 +387,9 @@ class Graphs(commands.Cog):
         with_app_command=False,
     )
     async def extreme(self, ctx: commands.Context, *args: str) -> None:
-        """Plots pairs of lowest rated unsolved problem and highest rated
-        solved problem for every contest that was rated for the given user.
+        """Vẽ biểu đồ cho thấy bài tập chưa giải có rating thấp nhất
+        và bài tập đã giải có rating cao nhất của mỗi kỳ thi mà người
+        dùng đó đã thi (rated).
         """
         (solved, unsolved, nolegend), remaining = cf_common.filter_flags(
             args, ['+solved', '+unsolved', '+nolegend']
@@ -442,8 +440,8 @@ class Graphs(commands.Cog):
         with_app_command=False,
     )
     async def solved(self, ctx: commands.Context, *args: str) -> None:
-        """Shows a histogram of solved problems' rating on Codeforces for the
-        handles provided. e.g. ;plot solved meooow +contest +virtual +outof +dp
+        """Hiển thị biểu đồ phân bổ rating của các bài đã giải trên Codeforces.
+        Ví dụ: ;plot solved meooow +contest +virtual +outof +dp
         """
         filt = cf_common.SubFilter()
         remaining = filt.parse(args)
@@ -521,7 +519,7 @@ class Graphs(commands.Cog):
         with_app_command=False,
     )
     async def hist(self, ctx: commands.Context, *args: str) -> None:
-        """Shows histogram of problems solved on Codeforces over time"""
+        """Hiển thị biểu đồ số lượng bài đã giải trên Codeforces theo thời gian."""
         filt = cf_common.SubFilter()
         remaining = filt.parse(args)
         phase_days = 1
@@ -640,7 +638,7 @@ class Graphs(commands.Cog):
         with_app_command=False,
     )
     async def curve(self, ctx: commands.Context, *args: str) -> None:
-        """Plots the count of problems solved over time on Codeforces."""
+        """Vẽ biểu đồ tổng số bài giải được theo thời gian trên Codeforces."""
         filt = cf_common.SubFilter()
         remaining = filt.parse(args)
         handles: Sequence[str] = remaining or ('!' + str(ctx.author),)
@@ -691,8 +689,8 @@ class Graphs(commands.Cog):
         with_app_command=False,
     )
     async def scatter(self, ctx: commands.Context, *args: str) -> None:
-        """Plot Codeforces rating overlaid on a scatter plot of problems solved.
-        Also plots a running average of ratings of problems solved in practice."""
+        """Vẽ biểu đồ Codeforces rating chồng lên biểu đồ scatter của các bài đã giải.
+        Đồng thời vẽ đường trung bình rating của các bài luyện tập (practice)."""
         (nolegend,), remaining = cf_common.filter_flags(args, ['+nolegend'])
         (legend,) = cf_common.negate_flags(nolegend)
         filt = cf_common.SubFilter()
@@ -847,7 +845,7 @@ class Graphs(commands.Cog):
 
     @plot.command(brief='Show server rating distribution')
     async def distrib(self, ctx: commands.Context) -> None:
-        """Plots rating distribution of users in this server"""
+        """Vẽ biểu đồ phân bổ rating của các thành viên trong server."""
 
         def in_purgatory(userid: int) -> bool:
             member = ctx.guild.get_member(int(userid))
@@ -880,10 +878,12 @@ class Graphs(commands.Cog):
         activity: str = 'active',
         contest_cutoff: int = 5,
     ) -> None:
-        """Plots rating distribution of either active or all users on Codeforces,
-        in either normal or log scale.
-        Default mode is log, default activity is active (competed in last 90 days)
-        Default contest cutoff is 5 (competed at least five times overall)
+        """Vẽ biểu đồ phân bổ rating của người dùng hoạt động (hoặc tất cả)
+        trên Codeforces,
+        theo tỷ lệ bình thường hoặc log scale.
+        Chế độ mặc định là log, trạng thái mặc định là active (có tham gia thi
+        trong 90 ngày qua)
+        Ngưỡng tối thiểu mặc định là 5 kỳ thi.
         """
         if activity not in ['active', 'all']:
             raise GraphCogError('Activity should be either `active` or `all`')

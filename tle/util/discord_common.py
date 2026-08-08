@@ -23,11 +23,11 @@ def embed_neutral(desc: object, color: int | None = None) -> discord.Embed:
 
 
 def embed_success(desc: object) -> discord.Embed:
-    return discord.Embed(description=str(desc), color=_SUCCESS_GREEN)
+    return discord.Embed(description=f'✅ {desc}', color=_SUCCESS_GREEN)
 
 
 def embed_alert(desc: object) -> discord.Embed:
-    return discord.Embed(description=str(desc), color=_ALERT_AMBER)
+    return discord.Embed(description=f'⚠️ {desc}', color=_ALERT_AMBER)
 
 
 def random_cf_color() -> int:

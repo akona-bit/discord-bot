@@ -71,7 +71,7 @@ class Codeforces(commands.Cog):
     @commands.hybrid_command(brief='Upsolve một bài')
     @cf_common.user_guard(group='gitgud')
     async def upsolve(self, ctx: commands.Context, choice: int = -1) -> None:
-        """Request an unsolved problem from a contest you participated in
+        """Yêu cầu một bài tập chưa giải từ một kỳ thi mà bạn đã tham gia
         delta  | -300 | -200 | -100 |  0  | +100 | +200 | +300
         points |   2  |   3  |   5  |  8  |  12  |  17  |  23
         """
@@ -174,8 +174,9 @@ class Codeforces(commands.Cog):
         usage='[handles] [+hardest] [+practice] [+contest] [+virtual] [+outof] [+team] [+tag..] [~tag..] [r>=rating] [r<=rating] [d>=[[dd]mm]yyyy] [d<[[dd]mm]yyyy] [c+marker..] [i+index..]',  # noqa: E501
     )
     async def stalk(self, ctx: commands.Context, *args: str) -> None:
-        """Print problems solved by user sorted by time (default) or rating.
-        All submission types are included by default (practice, contest, etc.)
+        """In ra danh sách bài tập đã giải của người dùng sắp xếp
+        theo thời gian (mặc định) hoặc điểm (rating).
+        Bao gồm tất cả các loại submission (luyện tập, thi đấu, v.v.)
         """
         (hardest,), remaining = cf_common.filter_flags(args, ['+hardest'])
         filt = cf_common.SubFilter(False)
@@ -188,7 +189,7 @@ class Codeforces(commands.Cog):
 
         if not submissions:
             raise CodeforcesCogError(
-                'Submissions not found within the search parameters'
+                'Không tìm thấy kết quả (submissions) nào khớp với tham số tìm kiếm'
             )
 
         if hardest:
@@ -228,11 +229,12 @@ class Codeforces(commands.Cog):
 
     @commands.command(brief='Tạo mashup', usage='[handles] [+tag..] [~tag..]')
     async def mashup(self, ctx: commands.Context, *args: str) -> None:
-        """Create a mashup contest.
+        """Tạo một kỳ thi tổng hợp (mashup contest).
 
-        The contest uses problems within +-100 of average rating of handles provided.
-        Add tags with "+" before them.
-        Ban tags with "~" before them.
+        Kỳ thi sử dụng các bài tập trong khoảng +-100 điểm
+        so với rating trung bình của các handles.
+        Thêm tags bằng cách đặt dấu "+" ở trước.
+        Cấm tags bằng cách đặt dấu "~" ở trước.
         """
         handles: list[str] = [arg for arg in args if arg[0] not in '+~']
         tags = cf_common.parse_tags(args, prefix='+')
@@ -295,7 +297,7 @@ class Codeforces(commands.Cog):
     @commands.hybrid_command(brief='Thử thách')
     @cf_common.user_guard(group='gitgud')
     async def gitgud(self, ctx: commands.Context, delta: int = 0) -> None:
-        """Request a problem for gitgud points.
+        """Yêu cầu một bài tập để kiếm điểm gitgud.
         delta  | -300 | -200 | -100 |  0  | +100 | +200 | +300
         points |   2  |   3  |   5  |  8  |  12  |  17  |  23
         """
@@ -344,9 +346,9 @@ class Codeforces(commands.Cog):
     async def gitlog(
         self, ctx: commands.Context, member: discord.Member | None = None
     ) -> None:
-        """Displays the list of gitgud problems issued to the specified member,
-        excluding those noguded by admins. If the challenge was completed, time
-        of completion and amount of points gained will also be displayed.
+        """Hiển thị danh sách các bài tập gitgud được giao cho người dùng,
+        không bao gồm các bài bị quản trị viên hủy (nogud). Nếu hoàn thành, thời gian
+        và số điểm nhận được cũng sẽ được hiển thị.
         """
 
         def make_line(entry: tuple) -> str:
@@ -450,8 +452,8 @@ class Codeforces(commands.Cog):
 
     @commands.command(brief='Gợi ý cuộc thi', usage='[handles...] [+pattern...]')
     async def vc(self, ctx: commands.Context, *args: str) -> None:
-        """Recommends a contest based on Codeforces rating of the handle provided.
-        e.g ;vc mblazev c1729 +global +hello +goodbye +avito"""
+        """Đề xuất một kỳ thi dựa trên rating Codeforces của handle.
+        VD: ;vc mblazev c1729 +global +hello +goodbye +avito"""
         markers = [x for x in args if x[0] == '+']
         handles = [x for x in args if x[0] != '+'] or ['!' + str(ctx.author)]
         handles = await cf_common.resolve_handles(
@@ -519,9 +521,8 @@ class Codeforces(commands.Cog):
         brief='Hiển thị vòng chưa giải gần hoàn thành nhất', usage='[keywords]'
     )
     async def fullsolve(self, ctx: commands.Context, *args: str) -> None:
-        """Displays a list of contests, sorted by number of unsolved problems.
-        Contest names matching any of the provided tags will be considered. e.g
-        ;fullsolve +edu"""
+        """Hiển thị danh sách kỳ thi, sắp xếp theo số lượng bài tập chưa giải.
+        Sẽ xét các kỳ thi có tên khớp với các thẻ tag. VD: ;fullsolve +edu"""
         (handle,) = await cf_common.resolve_handles(
             ctx, self.converter, ('!' + str(ctx.author),)
         )
@@ -622,9 +623,7 @@ class Codeforces(commands.Cog):
 
     @commands.command(brief='Tính xếp hạng đội', usage='[handles] [+peak]')
     async def teamrate(self, ctx: commands.Context, *args: str) -> None:
-        """Provides the combined rating of the entire team. If +server is
-        provided as the only handle, will display the rating of the entire
-        server. Supports multipliers. e.g: ;teamrate gamegame*1000"""
+        """Tính tổng rating của cả đội. Nếu chỉ dùng thẻ +server, sẽ tính rating của toàn bộ server. Hỗ trợ phép nhân, VD: ;teamrate gamegame*1000"""  # noqa: E501
 
         (is_entire_server, peak), handles = cf_common.filter_flags(
             args, ['+server', '+peak']

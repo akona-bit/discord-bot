@@ -288,11 +288,11 @@ class Dueling(commands.Cog):
     async def challenge(
         self, ctx: commands.Context, opponent: discord.Member, *args: str
     ) -> None:
-        """Challenge another server member to a duel. Problem difficulty will
-        be the lesser of duelist ratings minus 400. You can alternatively
-        specify a different rating. The duel will be unrated if specified
-        rating is above the default value or tags are used to choose a problem.
-        The challenge expires if ignored for 5 minutes.
+        """Thách đấu với một thành viên khác. Độ khó bài tập sẽ bằng
+        rating nhỏ nhất của hai người trừ đi 400. Bạn cũng có thể chỉ định
+        độ khó mong muốn. Trận đấu sẽ không tính điểm (unrated) nếu có
+        dùng tag hoặc rating cao hơn mặc định.
+        Lời thách đấu hết hạn sau 5 phút nếu bị bỏ qua.
         """
         challenger_id = ctx.author.id
         challengee_id = opponent.id
@@ -885,7 +885,7 @@ class Dueling(commands.Cog):
             return 'List of duelists', embed
 
         if not users:
-            raise DuelCogError('There are no active duelists.')
+            raise DuelCogError('Không có người thách đấu nào hiện tại.')
 
         pages = [
             make_page(chunk, k)
@@ -915,9 +915,8 @@ class Dueling(commands.Cog):
 
     @duel.command(brief='Invalidate the duel')
     async def invalidate(self, ctx: commands.Context) -> None:
-        """Declare your duel invalid. Use this if you've solved the problem
-        prior to the duel. You can only use this functionality during the first
-        60 seconds of the duel."""
+        """Hủy trận đấu hiện tại (không hợp lệ). Dùng lệnh này nếu bạn đã từng
+        giải bài tập này trước đó. Chỉ có thể dùng trong 60 giây đầu tiên."""
         active = await self.bot.user_db.check_duel_complete(ctx.author.id)
         if not active:
             raise DuelCogError(f'{ctx.author.mention}, you are not in a duel.')
@@ -932,7 +931,7 @@ class Dueling(commands.Cog):
     @duel.command(brief='Invalidate a duel', usage='[duelist]')
     @commands.has_any_role(constants.TLE_ADMIN, constants.TLE_MODERATOR)
     async def _invalidate(self, ctx: commands.Context, member: discord.Member) -> None:
-        """Declare an ongoing duel invalid."""
+        """Hủy một trận đấu đang diễn ra."""
         active = await self.bot.user_db.check_duel_complete(member.id)
         if not active:
             raise DuelCogError(f'{member.mention} is not in a duel.')
@@ -946,7 +945,7 @@ class Dueling(commands.Cog):
         assert isinstance(ctx.author, discord.Member)
         members = members or (ctx.author,)
         if len(members) > 5:
-            raise DuelCogError('Cannot plot more than 5 duelists at once.')
+            raise DuelCogError('Chỉ có thể vẽ tối đa biểu đồ cho 5 người cùng lúc.')
 
         duelists = [member.id for member in members]
         duels = await self.bot.user_db.get_complete_official_duels()
@@ -973,7 +972,7 @@ class Dueling(commands.Cog):
                 time_tick += 1
 
         if time_tick == 0:
-            raise DuelCogError('Nothing to plot.')
+            raise DuelCogError('Không có dữ liệu gì để vẽ biểu đồ.')
 
         plt.clf()
         # plot at least from mid gray to mid purple

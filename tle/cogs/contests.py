@@ -253,7 +253,7 @@ class Contests(commands.Cog):
 
     @clist.command(brief='Liệt kê cuộc thi sắp tới')
     async def future(self, ctx: commands.Context) -> None:
-        """List future contests on Codeforces."""
+        """Hiển thị danh sách các kỳ thi sắp tới trên Codeforces."""
         await self._send_contest_list(
             ctx,
             self.future_contests,
@@ -263,8 +263,7 @@ class Contests(commands.Cog):
 
     @clist.command(brief='Liệt kê cuộc thi đang diễn ra')
     async def active(self, ctx: commands.Context) -> None:
-        """List active contests on Codeforces, namely those in coding phase,
-        pending system test or in system test."""
+        """Hiển thị danh sách các kỳ thi đang diễn ra (trong thời gian thi hoặc đang chấm)."""  # noqa: E501
         await self._send_contest_list(
             ctx,
             self.active_contests,
@@ -274,7 +273,7 @@ class Contests(commands.Cog):
 
     @clist.command(brief='Liệt kê cuộc thi vừa kết thúc')
     async def finished(self, ctx: commands.Context) -> None:
-        """List recently concluded contests on Codeforces."""
+        """Hiển thị danh sách các kỳ thi vừa mới kết thúc."""
         await self._send_contest_list(
             ctx,
             self.finished_contests,
@@ -291,8 +290,7 @@ class Contests(commands.Cog):
     async def here(
         self, ctx: commands.Context, role: discord.Role, *before: int
     ) -> None:
-        """Sets reminder channel to current channel, role to the given role,
-        and reminder times to the given values in minutes."""
+        """Đặt kênh hiện tại làm kênh nhắc nhở, gán role và cài đặt các mốc thời gian nhắc nhở (phút)."""  # noqa: E501
         if not role.mentionable:
             raise ContestCogError('Role dùng cho nhắc nhở phải có thể được mention')
         if not before or any(before_mins <= 0 for before_mins in before):
@@ -315,7 +313,7 @@ class Contests(commands.Cog):
 
     @remind.command(brief='Hiển thị cài đặt nhắc nhở')
     async def settings(self, ctx: commands.Context) -> None:
-        """Shows the role, channel and before time settings."""
+        """Hiển thị cài đặt nhắc nhở hiện tại."""
         settings = await self.bot.user_db.get_reminder_settings(ctx.guild.id)
         if settings is None:
             await ctx.send(
@@ -348,8 +346,8 @@ class Contests(commands.Cog):
 
     @remind.command(brief='Đăng ký nhận nhắc nhở cuộc thi')
     async def on(self, ctx: commands.Context) -> None:
-        """Subscribes you to contest reminders. Use ';remind settings' to see
-        the current settings.
+        """Đăng ký nhận thông báo nhắc nhở kỳ thi.
+        Dùng lệnh ';remind settings' để xem cài đặt.
         """
         role = await self._get_remind_role(ctx.guild)
         if role in ctx.author.roles:
@@ -367,7 +365,7 @@ class Contests(commands.Cog):
 
     @remind.command(brief='Hủy đăng ký nhắc nhở cuộc thi')
     async def off(self, ctx: commands.Context) -> None:
-        """Unsubscribes you from contest reminders."""
+        """Hủy đăng ký nhận thông báo nhắc nhở kỳ thi."""
         role = await self._get_remind_role(ctx.guild)
         if role not in ctx.author.roles:
             embed = discord_common.embed_neutral(
@@ -558,7 +556,7 @@ class Contests(commands.Cog):
     ) -> discord.Embed:
         contest = ranklist.contest
         embed = discord_common.cf_color_embed(title=contest.name, url=contest.url)
-        embed.set_author(name='VC Standings')
+        embed.set_author(name='Thay đổi Rating')
         now = time.time()
         if vc_start_time and vc_end_time:
             en = '\N{EN SPACE}'
@@ -584,7 +582,7 @@ class Contests(commands.Cog):
             ctx, self.member_converter, handles, maxcnt=None, default_to_all_server=True
         )
         contest = self.bot.cf_cache.contest_cache.get_contest(contest_id)
-        wait_msg = await ctx.channel.send('Generating ranklist, please wait...')
+        wait_msg = await ctx.channel.send('Đang tạo bảng xếp hạng, vui lòng chờ...')
         ranklist = None
         try:
             ranklist = self.bot.cf_cache.ranklist_cache.get_ranklist(
@@ -621,7 +619,7 @@ class Contests(commands.Cog):
     ) -> None:
         contest = self.bot.cf_cache.contest_cache.get_contest(contest_id)
         if ranklist is None:
-            raise ContestCogError('No ranklist to show')
+            raise ContestCogError('Không có bảng xếp hạng nào để hiển thị')
 
         handle_standings = []
         for handle in handles:

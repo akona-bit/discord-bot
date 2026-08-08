@@ -58,6 +58,8 @@ class GistBackup:
 
     @staticmethod
     async def upload(db_path: Path) -> bool:
+        import asyncio
+        import sqlite3
         """Read database from db_path and upload to Gist. Returns True if successful."""
         if not constants.GIST_TOKEN or not constants.GIST_ID:
             logger.warning(
@@ -75,9 +77,24 @@ class GistBackup:
             'Accept': 'application/vnd.github.v3+json',
         }
 
+        backup_path = db_path.with_name(db_path.name + '.backup')
+
+        def _create_snapshot() -> None:
+            with sqlite3.connect(db_path) as src, sqlite3.connect(backup_path) as dst:
+                src.backup(dst)
+
         try:
-            with open(db_path, 'rb') as f:
+            await asyncio.to_thread(_create_snapshot)
+        except Exception as e:
+            logger.exception(f'Error creating database snapshot: {e}')
+            return False
+
+        try:
+            with open(backup_path, 'rb') as f:
                 content = base64.b64encode(f.read()).decode('utf-8')
+
+            # Clean up the temporary backup file
+            backup_path.unlink(missing_ok=True)
 
             payload = {'files': {'user.db': {'content': content}}}
 
