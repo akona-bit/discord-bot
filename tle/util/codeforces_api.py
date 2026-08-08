@@ -302,7 +302,7 @@ class CodeforcesApiError(commands.CommandError):
     """Base class for all API related errors."""
 
     def __init__(self, message: str | None = None):
-        super().__init__(message or 'Codeforces API error')
+        super().__init__(message or 'Lỗi từ máy chủ Codeforces API')
 
 
 class TrueApiError(CodeforcesApiError):
@@ -317,14 +317,14 @@ class ClientError(CodeforcesApiError):
     """An error caused by a request to the API failing."""
 
     def __init__(self) -> None:
-        super().__init__('Error connecting to Codeforces API')
+        super().__init__('Lỗi kết nối tới API Codeforces')
 
 
 class HandleNotFoundError(TrueApiError):
     """An error caused by a handle not being found on Codeforces."""
 
     def __init__(self, comment: str, handle: str):
-        super().__init__(comment, f'Handle `{handle}` not found on Codeforces')
+        super().__init__(comment, f'Không tìm thấy handle `{handle}` trên Codeforces')
         self.handle = handle
 
 
@@ -332,7 +332,9 @@ class HandleInvalidError(TrueApiError):
     """An error caused by a handle not being valid on Codeforces."""
 
     def __init__(self, comment: str, handle: str):
-        super().__init__(comment, f'`{handle}` is not a valid Codeforces handle')
+        super().__init__(
+            comment, f'`{handle}` không phải là một handle Codeforces hợp lệ'
+        )
         self.handle = handle
 
 
@@ -340,7 +342,9 @@ class CallLimitExceededError(TrueApiError):
     """An error caused by the call limit being exceeded."""
 
     def __init__(self, comment: str):
-        super().__init__(comment, 'Codeforces API call limit exceeded')
+        super().__init__(
+            comment, 'Vượt quá giới hạn số lần gọi API Codeforces (Rate limit)'
+        )
 
 
 class ContestNotFoundError(TrueApiError):
@@ -348,7 +352,7 @@ class ContestNotFoundError(TrueApiError):
 
     def __init__(self, comment: str, contest_id: Any):
         super().__init__(
-            comment, f'Contest with ID `{contest_id}` not found on Codeforces'
+            comment, f'Không tìm thấy kỳ thi có ID `{contest_id}` trên Codeforces'
         )
 
 
@@ -357,7 +361,7 @@ class RatingChangesUnavailableError(TrueApiError):
 
     def __init__(self, comment: str, contest_id: Any):
         super().__init__(
-            comment, f'Rating changes unavailable for contest with ID `{contest_id}`'
+            comment, f'Dữ liệu thay đổi điểm chưa có cho kỳ thi `{contest_id}`'
         )
 
 
