@@ -54,11 +54,11 @@ class Starboard(commands.Cog):
     @staticmethod
     def prepare_embed(message: discord.Message, color: int) -> discord.Embed:
         embed = discord.Embed(color=color, timestamp=message.created_at)
-                embed.add_field(name='Kênh', value=message.channel.mention)
-                embed.add_field(name='Đi tới', value=f'[Gốc]({message.jump_url})')
+        embed.add_field(name='Kênh', value=message.channel.mention)
+        embed.add_field(name='Đi tới', value=f'[Gốc]({message.jump_url})')
 
         if message.content:
-                    embed.add_field(name='Nội dung', value=message.content, inline=False)
+            embed.add_field(name='Nội dung', value=message.content, inline=False)
 
         if message.embeds:
             data = message.embeds[0]
