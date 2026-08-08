@@ -1,0 +1,33 @@
+app = "tle-bot"
+
+kill_signal = "SIGINT"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[[mounts]]
+  source = "tle-data"
+  destination = "/bot/data"
+
+[env]
+# Do NOT store secrets here. Use `fly secrets set` to provide BOT_TOKEN and other secrets.
+
+[deploy]
+  release_command = ""
+
+[[services]]
+  internal_port = 8080
+  protocol = "tcp"
+  [services.concurrency]
+    type = "connections"
+    soft_limit = 25
+    hard_limit = 50
+  [[services.ports]]
+    handlers = ["http"]
+    port = 80
+  [[services.ports]]
+    handlers = ["tls","http"]
+    port = 443
+  [[services.ports]]
+    port = 8080
+    handlers = ["http"]
