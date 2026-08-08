@@ -16,6 +16,7 @@ from discord.ext import commands
 from tle import constants
 from tle.util import codeforces_api as cf, db, events
 from tle.util.cache import CacheSystem, ContestNotFound
+from tle.util.gist_backup import GistBackup
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +45,7 @@ async def initialize(bot: Any, nodb: bool) -> None:
     if nodb:
         user_db = db.DummyUserDbConn()
     else:
+        await GistBackup.download(constants.USER_DB_FILE_PATH)
         user_db = db.UserDbConn(str(constants.USER_DB_FILE_PATH))
         await user_db.connect()
 

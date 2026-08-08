@@ -22,6 +22,7 @@ from matplotlib import pyplot as plt
 
 from tle import constants
 from tle.util import codeforces_common as cf_common, db, discord_common
+from tle.util.gist_backup import GistBackup
 
 
 def setup() -> None:
@@ -84,6 +85,7 @@ class TLEBot(commands.Bot):
         self.oauth_server: Any = None
         self.oauth_state_store: Any = None
         self._keep_alive_task: asyncio.Task[None] | None = None
+        self._backup_task: asyncio.Task[None] | None = None
 
     async def get_context(
         self, message: discord.Message, *, cls: type | None = None
@@ -127,10 +129,18 @@ class TLEBot(commands.Bot):
 
         # Start self-ping task to keep Render/hosting service alive.
         self._keep_alive_task = asyncio.create_task(self._self_ping_loop())
+        # Start backup task to periodically upload database to Gist.
+        self._backup_task = asyncio.create_task(self._backup_loop())
 
     async def close(self) -> None:
         if self._keep_alive_task is not None:
             self._keep_alive_task.cancel()
+        if self._backup_task is not None:
+            self._backup_task.cancel()
+        
+        # Upload backup one last time before shutting down
+        logging.info("Shutting down... Performing final database backup.")
+        await GistBackup.upload(constants.USER_DB_FILE_PATH)
         if self.oauth_server is not None:
             await self.oauth_server.stop()
         try:
@@ -143,6 +153,21 @@ class TLEBot(commands.Bot):
         if cf_cache is not None:
             await cf_cache.conn.close()
         await super().close()
+
+    async def _backup_loop(self) -> None:
+        """Periodically upload the database to GitHub Gist."""
+        _BACKUP_INTERVAL = 60 * 60  # 1 hour
+        await asyncio.sleep(60) # Initial delay to let the bot start properly
+        
+        while True:
+            try:
+                logging.info("Running periodic database backup.")
+                await GistBackup.upload(constants.USER_DB_FILE_PATH)
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                logging.error(f"Error in backup loop: {e}")
+            await asyncio.sleep(_BACKUP_INTERVAL)
 
     async def _start_health_server(self, port: int) -> None:
         """Start a minimal HTTP server with only a health-check endpoint."""
