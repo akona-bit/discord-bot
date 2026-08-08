@@ -441,6 +441,38 @@ async def _query_api(path: str, data: Any = None) -> Any:
     raise TrueApiError(comment)
 
 
+async def _query_api_get(path: str, params: Any = None) -> Any:
+        """Query Codeforces API using an anonymous GET request.
+
+        Some Codeforces endpoints (notably contest.standings for non-admin users)
+        require anonymous GET requests with only contestId as a query parameter.
+        This helper performs a GET and mirrors the error handling of _query_api.
+        """
+        url = API_BASE_URL + path
+        logger.info(f'Querying CF API (GET) at {url} with {params}')
+        headers = {'Accept-Encoding': 'gzip'}
+        assert _session is not None, 'Session not initialized. Call initialize() first.'
+        try:
+            async with _session.get(url, params=params, headers=headers) as resp:
+                try:
+                    respjson = await resp.json()
+                except aiohttp.ContentTypeError:
+                    logger.warning(
+                        f'CF API did not respond with JSON, status {resp.status}.'
+                    )
+                    raise CodeforcesApiError
+                if resp.status == 200:
+                    return respjson['result']
+                comment = f'HTTP Error {resp.status}, {respjson.get("comment")}'
+        except aiohttp.ClientError as e:
+            logger.error(f'Request to CF API encountered error: {e!r}')
+            raise ClientError from e
+        logger.warning(f'Query to CF API failed: {comment}')
+        if 'limit exceeded' in comment:
+            raise CallLimitExceededError(comment)
+        raise TrueApiError(comment)
+
+
 class contest:
     @staticmethod
     async def to_list(*, gym: bool | None = None) -> list[Contest]:
@@ -475,23 +507,29 @@ class contest:
         room: Any | None = None,
         show_unofficial: bool | None = None,
     ) -> tuple[Contest, list[Problem], list[RanklistRow]]:
-        params = {'contestId': contest_id}
-        if from_ is not None:
-            params['from'] = from_
-        if count is not None:
-            params['count'] = count
-        if handles is not None:
-            params['handles'] = ';'.join(handles)
-        if room is not None:
-            params['room'] = room
-        if show_unofficial is not None:
-            params['showUnofficial'] = _bool_to_str(show_unofficial)
+        # Try anonymous GET with only contestId first: Codeforces may require
+        # anonymous GET requests with only contestId for non-admin users.
         try:
-            resp = await _query_api('contest.standings', params)
-        except TrueApiError as e:
-            if 'not found' in e.comment:
-                raise ContestNotFoundError(e.comment, contest_id)
-            raise
+            resp = await _query_api_get('contest.standings', {'contestId': contest_id})
+        except TrueApiError:
+            # Fallback to POST with requested parameters if GET fails
+            params = {'contestId': contest_id}
+            if from_ is not None:
+                params['from'] = from_
+            if count is not None:
+                params['count'] = count
+            if handles is not None:
+                params['handles'] = ';'.join(handles)
+            if room is not None:
+                params['room'] = room
+            if show_unofficial is not None:
+                params['showUnofficial'] = _bool_to_str(show_unofficial)
+            try:
+                resp = await _query_api('contest.standings', params)
+            except TrueApiError as e:
+                if 'not found' in e.comment:
+                    raise ContestNotFoundError(e.comment, contest_id)
+                raise
         contest_ = make_from_dict(Contest, resp['contest'])
         problems = [
             make_from_dict(Problem, problem_dict) for problem_dict in resp['problems']
