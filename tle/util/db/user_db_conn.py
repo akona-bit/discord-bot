@@ -273,6 +273,14 @@ class UserDbConn:
             )
          """)
 
+        # Tracker module
+        await self.conn.execute("""
+            CREATE TABLE IF NOT EXISTS tracker_settings (
+                guild_id TEXT PRIMARY KEY,
+                channel_id TEXT
+            )
+        """)
+
         # === one-time migration from old tables ===
         cursor = await self.conn.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name='starboard'"
@@ -1340,6 +1348,33 @@ class UserDbConn:
         vc_id = row.vc_id
         query = 'DELETE FROM rated_vc_users WHERE user_id = ? AND vc_id = ? '
         cursor = await self.conn.execute(query, (user_id, vc_id))
+        await self.conn.commit()
+        return cursor.rowcount
+
+    # Tracker methods
+    async def set_tracker_channel(self, guild_id: int, channel_id: int) -> None:
+        query = """
+            INSERT OR REPLACE INTO tracker_settings (guild_id, channel_id)
+            VALUES (?, ?)
+        """
+        await self.conn.execute(query, (guild_id, channel_id))
+        await self.conn.commit()
+
+    async def get_tracker_channel(self, guild_id: int) -> int | None:
+        query = 'SELECT channel_id FROM tracker_settings WHERE guild_id = ?'
+        cursor = await self.conn.execute(query, (guild_id,))
+        row = await cursor.fetchone()
+        return int(row[0]) if row else None
+
+    async def get_all_tracker_channels(self) -> list[tuple[int, int]]:
+        query = 'SELECT guild_id, channel_id FROM tracker_settings'
+        cursor = await self.conn.execute(query)
+        rows = await cursor.fetchall()
+        return [(int(row[0]), int(row[1])) for row in rows]
+
+    async def clear_tracker_channel(self, guild_id: int) -> int:
+        query = 'DELETE FROM tracker_settings WHERE guild_id = ?'
+        cursor = await self.conn.execute(query, (guild_id,))
         await self.conn.commit()
         return cursor.rowcount
 
