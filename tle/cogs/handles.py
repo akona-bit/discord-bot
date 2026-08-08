@@ -555,7 +555,7 @@ class Handles(commands.Cog):
         """Show Codeforces handle of a user."""
         handle = await self.bot.user_db.get_handle(member.id, ctx.guild.id)
         if not handle:
-            raise HandleCogError(f'Handle for {member.mention} not found in database')
+            raise HandleCogError(f'Không tìm thấy handle cho {member.mention} trong cơ sở dữ liệu')
         user = await self.bot.user_db.fetch_cf_user(handle)
         embed = _make_profile_embed(member, user, mode='get')
         await ctx.send(embed=embed)
@@ -566,7 +566,7 @@ class Handles(commands.Cog):
         user_id = await self.bot.user_db.get_user_id(handle, ctx.guild.id)
         if not user_id:
             raise HandleCogError(
-                f'Discord username for `{handle}` not found in database'
+                f'Không tìm thấy tài khoản Discord cho handle `{handle}` trong cơ sở dữ liệu'
             )
         user = await self.bot.user_db.fetch_cf_user(handle)
         member = ctx.guild.get_member(user_id)
@@ -582,7 +582,7 @@ class Handles(commands.Cog):
         (handle,) = await cf_common.resolve_handles(ctx, self.converter, [handle])
         user_id = await self.bot.user_db.get_user_id(handle, ctx.guild.id)
         if user_id is None:
-            raise HandleCogError(f'{handle} not found in database')
+            raise HandleCogError(f'Không tìm thấy {handle} trong cơ sở dữ liệu')
 
         await self.bot.user_db.remove_handle(handle, ctx.guild.id)
         member = ctx.guild.get_member(user_id)
@@ -911,12 +911,12 @@ class Handles(commands.Cog):
             )
             top_increases_str.append(increase_str)
 
-        rank_changes_str = rank_changes_str or ['No rank changes']
+        rank_changes_str = rank_changes_str or ['Không có ai thay đổi hạng']
 
         embed_heading = discord.Embed(
             title=contest.name, url=contest.url, description=''
         )
-        embed_heading.set_author(name='Rank updates')
+        embed_heading.set_author(name='Cập nhật hạng')
         embeds = [embed_heading]
 
         for rank_changes_chunk in paginator.chunkify(
@@ -927,9 +927,9 @@ class Handles(commands.Cog):
             embeds.append(embed)
 
         top_rating_increases_embed = discord.Embed(
-            description='\n'.join(top_increases_str) or 'Nobody got a positive delta :('
+            description='\n'.join(top_increases_str) or 'Không có ai được cộng điểm (delta dương) cả :('
         )
-        top_rating_increases_embed.set_author(name='Top rating increases')
+        top_rating_increases_embed.set_author(name='Top tăng điểm nhiều nhất')
 
         embeds.append(top_rating_increases_embed)
         discord_common.set_same_cf_color(embeds)
@@ -1087,7 +1087,7 @@ class Handles(commands.Cog):
     async def role(self, ctx: commands.Context, action: str, which: str) -> None:
         """e.g. ;role remove duel"""
         if which == 'vc':
-            await self._generic_remind(ctx, action, 'Virtual Contestant', 'vc')
+            await self._generic_remind(ctx, action, 'Thí sinh thi ảo (Virtual)', 'vc')
         elif which == 'duel':
             await self._generic_remind(ctx, action, 'Duelist', 'duel')
         else:

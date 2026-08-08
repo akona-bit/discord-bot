@@ -188,7 +188,7 @@ class FindMemberFailedError(ResolveHandleError):
 class HandleNotRegisteredError(ResolveHandleError):
     def __init__(self, member: discord.Member) -> None:
         super().__init__(
-            f'Codeforces handle for {member.mention} not found in database'
+            f'Không tìm thấy Codeforces handle cho {member.mention} trong cơ sở dữ liệu'
         )
 
 

@@ -777,7 +777,7 @@ class Contests(commands.Cog):
             rating_change_str = f'{member.mention} [{discord.utils.escape_markdown(change.handle)}]({cf.PROFILE_BASE_URL}{change.handle}): {change.oldRating} \N{HORIZONTAL BAR} **{delta:+}** \N{LONG RIGHTWARDS ARROW} {change.newRating}'  # noqa: E501
             rating_changes_str.append(rating_change_str)
 
-        desc = '\n'.join(rank_changes_str) or 'No rank changes'
+        desc = '\n'.join(rank_changes_str) or 'Không có ai thay đổi hạng'
         embed = discord_common.cf_color_embed(
             title=contest.name, url=contest.url, description=desc
         )
