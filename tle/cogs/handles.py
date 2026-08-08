@@ -7,9 +7,28 @@ import io
 import logging
 from typing import Any
 
-import cairo
+try:
+    import cairo
+except ModuleNotFoundError as exc:
+    cairo = None  # type: ignore[assignment]
+    _HANDLE_IMAGES_AVAILABLE = False
+    _HANDLE_IMAGE_IMPORT_ERROR = exc
+else:
+    try:
+        import gi
+        gi.require_version('Pango', '1.0')
+        gi.require_version('PangoCairo', '1.0')
+        from gi.repository import Pango, PangoCairo
+    except ModuleNotFoundError as exc:
+        Pango = None  # type: ignore[assignment]
+        PangoCairo = None  # type: ignore[assignment]
+        _HANDLE_IMAGES_AVAILABLE = False
+        _HANDLE_IMAGE_IMPORT_ERROR = exc
+    else:
+        _HANDLE_IMAGES_AVAILABLE = True
+        _HANDLE_IMAGE_IMPORT_ERROR = None
+
 import discord
-import gi
 from discord.ext import commands
 
 from tle import constants
@@ -26,10 +45,6 @@ from tle.util import (
     tasks,
 )
 from tle.util.cache import ContestNotFound
-
-gi.require_version('Pango', '1.0')
-gi.require_version('PangoCairo', '1.0')
-from gi.repository import Pango, PangoCairo
 
 _HANDLES_PER_PAGE = 15
 _NAME_MAX_LEN = 20
@@ -86,6 +101,12 @@ def get_gudgitters_image(
     rankings: list[tuple[int, str, str, int | None, int]],
 ) -> discord.File:
     """return PIL image for rankings"""
+    if not _HANDLE_IMAGES_AVAILABLE:
+        raise HandleCogError(
+            'Image generation is unavailable because an optional dependency is missing.'
+            ' Install PyGObject and pycairo, then restart the bot.'
+        )
+
     SMOKE_WHITE = (250, 250, 250)
     BLACK = (0, 0, 0)
 
@@ -189,21 +210,21 @@ def _make_profile_embed(
     assert mode in ('set', 'get')
     if mode == 'set':
         desc = (
-            f'Handle for {member.mention} successfully set to'
+            f'Đã liên kết handle cho {member.mention} thành'
             f' **[{user.handle}]({user.url})**'
         )
     else:
         desc = (
-            f'Handle for {member.mention} is currently set to'
+            f'Handle của {member.mention} hiện là'
             f' **[{user.handle}]({user.url})**'
         )
     if user.rating is None:
         embed = discord.Embed(description=desc)
-        embed.add_field(name='Rating', value='Unrated', inline=True)
+        embed.add_field(name='Điểm', value='Chưa xếp hạng', inline=True)
     else:
         embed = discord.Embed(description=desc, color=user.rank.color_embed)
-        embed.add_field(name='Rating', value=user.rating, inline=True)
-        embed.add_field(name='Rank', value=user.rank.title, inline=True)
+        embed.add_field(name='Điểm', value=user.rating, inline=True)
+        embed.add_field(name='Hạng', value=user.rank.title, inline=True)
     embed.set_thumbnail(url=f'{user.titlePhoto}')
     return embed
 
@@ -454,13 +475,22 @@ class Handles(commands.Cog):
         else:
             roles = [role for role in guild.roles if role.name == user.rank.title]
             if not roles:
-                raise HandleCogError(
-                    f'Role for rank `{user.rank.title}` not present in the server'
-                )
-            role_to_assign = roles[0]
-        await self.update_member_rank_role(
-            member, role_to_assign, reason='New handle set for user'
-        )
+                    # Try to create the missing rank role automatically
+                    try:
+                        rank2role = await self._ensure_roles_exist(guild, {user.rank.title})
+                    except HandleCogError as e:
+                        raise HandleCogError(
+                            f'Lỗi khi đảm bảo vai trò cho rank `{user.rank.title}`: {e}'
+                        )
+                    roles = [role for role in guild.roles if role.name == user.rank.title]
+                    if not roles:
+                        raise HandleCogError(
+                            f'Không tìm thấy và không thể tạo vai trò cho rank `{user.rank.title}` trên server.'
+                        )
+                role_to_assign = roles[0]
+            await self.update_member_rank_role(
+                member, role_to_assign, reason='New handle set for user'
+            )
 
     async def _set(
         self, ctx: commands.Context, member: discord.Member, user: cf.User
@@ -500,27 +530,26 @@ class Handles(commands.Cog):
         view.add_item(
             discord.ui.Button(
                 style=discord.ButtonStyle.link,
-                label='Link Codeforces Account',
+                label='Liên kết tài khoản Codeforces',
                 url=auth_url,
             )
         )
         msg = (
-            'Click the button below to link your Codeforces account.'
-            ' The link expires in 5 minutes.'
+            'Nhấn nút dưới đây để liên kết tài khoản Codeforces của bạn.'
+            ' Liên kết sẽ hết hạn sau 5 phút.'
         )
         if ctx.interaction:
             await ctx.send(msg, view=view, ephemeral=True)
         else:
             try:
                 await ctx.author.send(msg, view=view)
-                await ctx.send('Check your DMs for the link!')
+                await ctx.send('Kiểm tra tin nhắn riêng (DM) để nhận liên kết!')
             except discord.Forbidden:
                 self.bot.oauth_state_store.revoke(ctx.author.id)
                 await ctx.send(
-                    f'{ctx.author.mention}, I could not DM you.'
-                    ' Please enable DMs from server members'
-                    ' and try again, or use the'
-                    ' /handle identify slash command instead.'
+                    f'{ctx.author.mention}, không thể gửi tin nhắn riêng cho bạn.'
+                    ' Vui lòng bật DMs cho thành viên máy chủ'
+                    ' và thử lại, hoặc dùng lệnh slash /handle identify.'
                 )
 
     @handle.command(brief='Get handle by Discord username')
@@ -562,7 +591,7 @@ class Handles(commands.Cog):
         await self.update_member_rank_role(
             member, role_to_assign=None, reason='Handle unlinked'
         )
-        embed = discord_common.embed_success(f'Removed {handle} from database')
+        embed = discord_common.embed_success(f'Đã xóa {handle} khỏi cơ sở dữ liệu')
         await ctx.send(embed=embed)
 
     @handle.command(brief="Resolve redirect of a user's handle")
@@ -641,12 +670,12 @@ class Handles(commands.Cog):
         # Return summary embed
         lines = []
         if not fixed and not failed:
-            return discord_common.embed_success('No handles updated')
+            return discord_common.embed_success('Không có handle nào được cập nhật')
         if fixed:
-            lines.append('**Fixed**')
+            lines.append('**Đã sửa**')
             lines += (f'{old} -> {new}' for old, new in fixed)
         if failed:
-            lines.append('**Failed**')
+            lines.append('**Thất bại**')
             lines += failed
         return discord_common.embed_success('\n'.join(lines))
 
@@ -676,8 +705,8 @@ class Handles(commands.Cog):
 
         if not rankings:
             raise HandleCogError(
-                'No one has completed a gitgud challenge,'
-                ' send ;gitgud to request and ;gotgud to mark it as complete'
+                'Chưa có ai hoàn thành thử thách gitgud.'
+                ' Dùng lệnh ;gitgud để yêu cầu và ;gotgud để đánh dấu hoàn thành.'
             )
         discord_file = get_gudgitters_image(rankings)
         await ctx.send(file=discord_file)
@@ -702,7 +731,7 @@ class Handles(commands.Cog):
             if member is not None
         ]
         if not users:
-            raise HandleCogError('No members with registered handles.')
+            raise HandleCogError('Không có thành viên nào đã đăng ký handle.')
 
         users.sort(
             key=lambda x: (1 if x[2] is None else -x[2], x[1])
@@ -726,6 +755,41 @@ class Handles(commands.Cog):
         res = await self.bot.user_db.get_handles_for_guild(guild.id)
         await self._update_ranks(guild, res)
 
+    async def _ensure_roles_exist(self, guild: discord.Guild, required_roles: set[str]) -> dict[str, discord.Role]:
+        """Ensure that roles for each rank in `required_roles` exist in the guild.
+
+        Creates missing roles using the color from cf.RATED_RANKS when available.
+        Returns a mapping from role name to discord.Role for all roles in the guild.
+        Raises HandleCogError if the bot lacks permissions or roles cannot be created.
+        """
+        rank2role = {role.name: role for role in guild.roles}
+        missing_roles = required_roles - rank2role.keys()
+        if not missing_roles:
+            return rank2role
+
+        for rank_title in missing_roles:
+            # Find corresponding rank coloring from cf.RATED_RANKS
+            rank_obj = next((r for r in cf.RATED_RANKS if r.title == rank_title), None)
+            color_int = rank_obj.color_embed if rank_obj and rank_obj.color_embed else constants._DEFAULT_COLOR
+            try:
+                new_role = await guild.create_role(
+                    name=rank_title,
+                    color=discord.Color(color_int),
+                    mentionable=True,
+                    reason='Auto-created rank role by bot',
+                )
+                self.logger.info(f'Created role {rank_title} in guild {guild.name} ({guild.id})')
+            except discord.Forbidden:
+                raise HandleCogError(
+                    f'Bot không có quyền tạo vai trò `{rank_title}`. Vui lòng cấp quyền Manage Roles cho bot.'
+                )
+            except discord.HTTPException as e:
+                raise HandleCogError(f'Không tạo được vai trò `{rank_title}`: {e}')
+
+        # Rebuild mapping after role creation
+        rank2role = {role.name: role for role in guild.roles}
+        return rank2role
+
     async def _update_ranks(
         self, guild: discord.Guild, res: builtins.list[tuple[int, str]]
     ) -> None:
@@ -736,7 +800,7 @@ class Handles(commands.Cog):
             (member, handle) for member, handle in member_handles if member is not None
         ]
         if not member_handles:
-            raise HandleCogError('Handles not set for any user')
+            raise HandleCogError('Chưa có ai thiết lập handle trong server này')
         members, handles = zip(*member_handles, strict=False)
         users = await cf.user.info(handles=handles)
         for user in users:
@@ -745,15 +809,17 @@ class Handles(commands.Cog):
         required_roles = {
             user.rank.title for user in users if user.rank != cf.UNRATED_RANK
         }
-        rank2role = {
-            role.name: role for role in guild.roles if role.name in required_roles
-        }
-        missing_roles = required_roles - rank2role.keys()
-        if missing_roles:
+        # Ensure required roles exist; create missing ones automatically.
+        try:
+            rank2role = await self._ensure_roles_exist(guild, required_roles)
+        except HandleCogError:
+            # Rebuild current mapping and report missing if creation failed
+            rank2role = {role.name: role for role in guild.roles if role.name in required_roles}
+            missing_roles = required_roles - rank2role.keys()
             roles_str = ', '.join(f'`{role}`' for role in missing_roles)
             plural = 's' if len(missing_roles) > 1 else ''
             raise HandleCogError(
-                f'Role{plural} for rank{plural} {roles_str} not present in the server'
+                f'Không tìm thấy vai trò cho rank{plural} {roles_str} trên server và bot không thể tạo chúng. Hãy cấp quyền Manage Roles cho bot hoặc tạo các vai trò này thủ công.'
             )
 
         for member, user in zip(members, users, strict=False):
@@ -873,7 +939,7 @@ class Handles(commands.Cog):
         """Updates Codeforces rank roles for every member in this server."""
         await self._update_ranks_all(ctx.guild)
         await ctx.send(
-            embed=discord_common.embed_success('Roles updated successfully.')
+            embed=discord_common.embed_success('Cập nhật vai trò thành công.')
         )
 
     @roleupdate.command(brief='Enable or disable auto role updates', usage='on|off')
@@ -886,16 +952,16 @@ class Handles(commands.Cog):
         if arg == 'on':
             rc = await self.bot.user_db.enable_auto_role_update(ctx.guild.id)
             if not rc:
-                raise HandleCogError('Auto role update is already enabled.')
+                raise HandleCogError('Đã bật cập nhật vai trò tự động từ trước.')
             await ctx.send(
-                embed=discord_common.embed_success('Auto role updates enabled.')
+                embed=discord_common.embed_success('Đã bật cập nhật vai trò tự động.')
             )
         elif arg == 'off':
             rc = await self.bot.user_db.disable_auto_role_update(ctx.guild.id)
             if not rc:
-                raise HandleCogError('Auto role update is already disabled.')
+                raise HandleCogError('Đã tắt cập nhật vai trò tự động từ trước.')
             await ctx.send(
-                embed=discord_common.embed_success('Auto role updates disabled.')
+                embed=discord_common.embed_success('Đã tắt cập nhật vai trò tự động.')
             )
         else:
             raise ValueError(f"arg must be 'on' or 'off', got '{arg}' instead.")
@@ -915,15 +981,15 @@ class Handles(commands.Cog):
             await self.bot.user_db.set_rankup_channel(ctx.guild.id, ctx.channel.id)
             await ctx.send(
                 embed=discord_common.embed_success(
-                    'Auto rank update publishing enabled.'
+                    'Đã bật đăng tự động thông báo thay đổi hạng tại kênh này.'
                 )
             )
         elif arg == 'off':
             rc = await self.bot.user_db.clear_rankup_channel(ctx.guild.id)
             if not rc:
-                raise HandleCogError('Rank update publishing is already disabled.')
+                raise HandleCogError('Đăng tự động thông báo thay đổi hạng đã bị tắt từ trước.')
             await ctx.send(
-                embed=discord_common.embed_success('Rank update publishing disabled.')
+                embed=discord_common.embed_success('Đã tắt đăng tự động thông báo thay đổi hạng.')
             )
         else:
             try:
@@ -938,10 +1004,10 @@ class Handles(commands.Cog):
         try:
             contest = self.bot.cf_cache.contest_cache.get_contest(contest_id)
         except ContestNotFound as e:
-            raise HandleCogError(f'Contest with id `{e.contest_id}` not found.')
+            raise HandleCogError(f'Không tìm thấy cuộc thi có id `{e.contest_id}`.')
         if contest.phase != 'FINISHED':
             raise HandleCogError(
-                f'Contest `{contest_id} | {contest.name}` has not finished.'
+                f'Cuộc thi `{contest_id} | {contest.name}` chưa kết thúc.'
             )
         try:
             changes = await cf.contest.ratingChanges(contest_id=contest_id)
@@ -949,7 +1015,7 @@ class Handles(commands.Cog):
             changes = None
         if not changes:
             raise HandleCogError(
-                'Rating changes are not available for contest'
+                'Dữ liệu thay đổi điểm chưa có cho cuộc thi'
                 f' `{contest_id} | {contest.name}`.'
             )
 
@@ -971,32 +1037,32 @@ class Handles(commands.Cog):
             if role in ctx.author.roles:
                 await ctx.send(
                     embed=discord_common.embed_neutral(
-                        f'You are already subscribed to {what} reminders'
+                        f'Bạn đã đăng ký nhận thông báo {what} rồi'
                     )
                 )
                 return
             await ctx.author.add_roles(
-                role, reason=f'User subscribed to {what} reminders'
+                role, reason=f'Người dùng đăng ký nhận thông báo {what}'
             )
             await ctx.send(
                 embed=discord_common.embed_success(
-                    f'Successfully subscribed to {what} reminders'
+                    f'Đã đăng ký nhận thông báo {what} thành công'
                 )
             )
         elif action == 'remove':
             if role not in ctx.author.roles:
                 await ctx.send(
                     embed=discord_common.embed_neutral(
-                        f'You are not subscribed to {what} reminders'
+                        f'Bạn chưa đăng ký nhận thông báo {what}'
                     )
                 )
                 return
             await ctx.author.remove_roles(
-                role, reason=f'User unsubscribed from {what} reminders'
+                role, reason=f'Người dùng hủy đăng ký nhận thông báo {what}'
             )
             await ctx.send(
                 embed=discord_common.embed_success(
-                    f'Successfully unsubscribed from {what} reminders'
+                    f'Đã hủy đăng ký nhận thông báo {what} thành công'
                 )
             )
         else:
@@ -1035,7 +1101,7 @@ class Handles(commands.Cog):
         purgatory_role_name = constants.TLE_PURGATORY
 
         if target_user == ctx.author:
-            raise HandleCogError('You cannot refer yourself.')
+            raise HandleCogError('Không thể giới thiệu chính bạn.')
 
         # Find the Purgatory role
         purgatory_role = discord_common.get_role(guild, purgatory_role_name)
@@ -1049,8 +1115,8 @@ class Handles(commands.Cog):
         elif purgatory_role in target_user.roles:
             await ctx.send(
                 embed=discord_common.embed_alert(
-                    f'Cannot grant Trusted role to {target_user.mention}.'
-                    f' User is currently in Purgatory.'
+                    f'Không thể cấp vai Trusted cho {target_user.mention}.'
+                    f' Người dùng hiện đang ở Purgatory.'
                 )
             )
             return
@@ -1059,14 +1125,14 @@ class Handles(commands.Cog):
         trusted_role = discord_common.get_role(guild, trusted_role_name)
         if trusted_role is None:
             raise HandleCogError(
-                f"The role '{trusted_role_name}' does not exist in this server."
+                f"Vai trò '{trusted_role_name}' không tồn tại trong server này."
             )
 
         # Check if target user already has the role
         if trusted_role in target_user.roles:
             await ctx.send(
                 embed=discord_common.embed_neutral(
-                    f'{target_user.mention} already has the Trusted role.'
+                    f'{target_user.mention} đã có vai Trusted.'
                 )
             )
             return
@@ -1074,19 +1140,19 @@ class Handles(commands.Cog):
         # Grant the Trusted role
         try:
             await target_user.add_roles(
-                trusted_role, reason=f'Referred by {ctx.author.name} ({ctx.author.id})'
+                trusted_role, reason=f'Giới thiệu bởi {ctx.author.name} ({ctx.author.id})'
             )
             await ctx.send(
-                f'Trusted role granted to {target_user.mention}'
-                f' by {ctx.author.mention}.'
+                f'Đã cấp vai Trusted cho {target_user.mention}'
+                f' bởi {ctx.author.mention}.'
             )
         except discord.Forbidden:
             raise HandleCogError(
-                f"No permissions to assign the '{trusted_role_name}' role."
+                f"Không có quyền để gán vai '{trusted_role_name}'."
             )
         except discord.HTTPException as e:
             raise HandleCogError(
-                f'Failed to assign the role due to an unexpected error: {e}'
+                f'Gán vai thất bại do lỗi: {e}'
             )
 
     @handle.command(brief='Grant Trusted role to old members without Purgatory role.')
@@ -1126,7 +1192,7 @@ class Handles(commands.Cog):
         http_failure_count = 0
 
         status_message = await ctx.send(
-            'Processing members for grandfathering Trusted...'
+            'Đang xử lý thành viên để cấp vai Trusted theo điều khoản grandfather...'
         )
 
         # Create a list to avoid issues if members leave/join during processing
