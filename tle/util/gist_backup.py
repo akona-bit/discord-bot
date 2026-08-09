@@ -60,6 +60,7 @@ class GistBackup:
     async def upload(db_path: Path) -> bool:
         import asyncio
         import sqlite3
+
         """Read database from db_path and upload to Gist. Returns True if successful."""
         if not constants.GIST_TOKEN or not constants.GIST_ID:
             logger.warning(

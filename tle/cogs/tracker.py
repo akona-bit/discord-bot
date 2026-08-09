@@ -37,7 +37,9 @@ class Tracker(commands.Cog):
 
     @tracker.command(brief='Bật theo dõi Bảng vàng', usage='[channel]')
     @commands.has_any_role(constants.TLE_ADMIN, constants.TLE_MODERATOR)
-    async def set(self, ctx: commands.Context, channel: discord.TextChannel = None) -> None:
+    async def set(
+        self, ctx: commands.Context, channel: discord.TextChannel = None
+    ) -> None:
         """Kích hoạt Bảng vàng tại kênh được chỉ định (mặc định là kênh hiện tại)."""
         channel = channel or ctx.channel
         await self.bot.user_db.set_tracker_channel(ctx.guild.id, channel.id)
@@ -53,9 +55,13 @@ class Tracker(commands.Cog):
         """Tắt tính năng thông báo Bảng vàng."""
         rc = await self.bot.user_db.clear_tracker_channel(ctx.guild.id)
         if rc:
-            await ctx.send(embed=discord_common.embed_success('Đã tắt Bảng vàng tự động.'))
+            await ctx.send(
+                embed=discord_common.embed_success('Đã tắt Bảng vàng tự động.')
+            )
         else:
-            await ctx.send(embed=discord_common.embed_alert('Bảng vàng hiện chưa được bật.'))
+            await ctx.send(
+                embed=discord_common.embed_alert('Bảng vàng hiện chưa được bật.')
+            )
 
     async def _send_ac_notification(
         self, guild_id: int, channel_id: int, handle: str, sub: cf.Submission
@@ -76,8 +82,10 @@ class Tracker(commands.Cog):
         embed = discord.Embed(
             title=problem_name,
             url=problem_url,
-            color=cf.rating2rank(user.rating).color_embed if user else discord_common._SUCCESS_GREEN,
-            description=f'**{handle}** vừa giải thành công bài tập này!'
+            color=cf.rating2rank(user.rating).color_embed
+            if user
+            else discord_common._SUCCESS_GREEN,
+            description=f'**{handle}** vừa giải thành công bài tập này!',
         )
         embed.set_author(name='🎉 AC Mới!')
 
@@ -91,7 +99,9 @@ class Tracker(commands.Cog):
         try:
             await channel.send(embed=embed)
         except discord.Forbidden:
-            logger.warning(f'Không có quyền gửi tin nhắn vào kênh {channel_id} ở {guild_id}')
+            logger.warning(
+                f'Không có quyền gửi tin nhắn vào kênh {channel_id} ở {guild_id}'
+            )
 
     async def _tracker_loop(self) -> None:
         """Background task to poll Codeforces for new Accepted submissions."""
@@ -141,7 +151,9 @@ class Tracker(commands.Cog):
 
                     for sub in subs:
                         # Skip if it's not a new submission
-                        if sub.creationTimeSeconds <= self.last_submission_times.get(handle, 0):
+                        if sub.creationTimeSeconds <= self.last_submission_times.get(
+                            handle, 0
+                        ):
                             continue
 
                         # Update the latest seen submission time
@@ -150,7 +162,9 @@ class Tracker(commands.Cog):
                         # Only notify if it's Accepted and it's not the first time we're seeding the tracker
                         if not is_first_time and sub.verdict == 'OK':
                             for guild_id, channel_id in subscribers:
-                                await self._send_ac_notification(guild_id, channel_id, handle, sub)
+                                await self._send_ac_notification(
+                                    guild_id, channel_id, handle, sub
+                                )
 
                     # Sleep for 2.5 seconds between requests to strictly respect CF rate limits (1 req/sec limit)
                     await asyncio.sleep(2.5)
@@ -160,6 +174,7 @@ class Tracker(commands.Cog):
             except Exception as e:
                 logger.exception(f'Error in tracker loop: {e}')
                 await asyncio.sleep(60)
+
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Tracker(bot))

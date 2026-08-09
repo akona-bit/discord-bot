@@ -17,9 +17,11 @@ dependencies = [
   # Database
   "aiosqlite >= 0.19, < 1",
   # Config
-  "python-dotenv >= 1.0, < 2",
+  "python-dotenv >= 1.2.2, < 2",
   # OAuth / JWT
   "PyJWT >= 2.8, < 3",
+  # Security bumps for transitive deps
+  "aiohttp >= 3.14.3, < 4",
 ]
 
 [project.optional-dependencies]
