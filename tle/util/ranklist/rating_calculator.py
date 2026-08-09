@@ -1,6 +1,7 @@
 """
 Adapted from Codeforces code to recalculate ratings
-by Mike Mirzayanov (mirzayanovmr@gmail.com) at https://codeforces.com/contest/1/submission/13861109
+by Mike Mirzayanov (mirzayanovmr@gmail.com)
+at https://codeforces.com/contest/1/submission/13861109
 Updated to use the current rating formula.
 """
 

@@ -32,7 +32,7 @@ class Tracker(commands.Cog):
 
     @commands.group(brief='Bảng Vàng Tự Động', invoke_without_command=True)
     async def tracker(self, ctx: commands.Context) -> None:
-        """Quản lý tính năng tự động gửi thông báo khi có người nộp bài Accepted (Bảng vàng)."""
+        """Quản lý tính năng tự động gửi thông báo khi có người nộp bài Accepted (Bảng vàng)."""  # noqa: E501
         await ctx.send_help(ctx.command)
 
     @tracker.command(brief='Bật theo dõi Bảng vàng', usage='[channel]')
@@ -77,7 +77,7 @@ class Tracker(commands.Cog):
 
         problem = sub.problem
         problem_name = f'{problem.index}. {problem.name}'
-        problem_url = f'https://codeforces.com/contest/{problem.contestId}/problem/{problem.index}'
+        problem_url = f'https://codeforces.com/contest/{problem.contestId}/problem/{problem.index}'  # noqa: E501
 
         embed = discord.Embed(
             title=problem_name,
@@ -159,14 +159,14 @@ class Tracker(commands.Cog):
                         # Update the latest seen submission time
                         self.last_submission_times[handle] = sub.creationTimeSeconds
 
-                        # Only notify if it's Accepted and it's not the first time we're seeding the tracker
+                        # Only notify if it's Accepted and it's not the first time we're seeding the tracker  # noqa: E501
                         if not is_first_time and sub.verdict == 'OK':
                             for guild_id, channel_id in subscribers:
                                 await self._send_ac_notification(
                                     guild_id, channel_id, handle, sub
                                 )
 
-                    # Sleep for 2.5 seconds between requests to strictly respect CF rate limits (1 req/sec limit)
+                    # Sleep for 2.5 seconds between requests to strictly respect CF rate limits (1 req/sec limit)  # noqa: E501
                     await asyncio.sleep(2.5)
 
             except asyncio.CancelledError:

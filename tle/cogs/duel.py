@@ -845,7 +845,7 @@ class Dueling(commands.Cog):
             ctx=ctx,
         )
 
-    @duel.command(brief='Show duelists')
+    @duel.command(brief='Show duelists', aliases=['leaderboard', 'lb'])
     async def ranklist(self, ctx: commands.Context) -> None:
         """Show the list of duelists with their duel rating."""
         user_pairs = [

@@ -281,6 +281,42 @@ class UserDbConn:
             )
         """)
 
+        # Daily Problem module
+        await self.conn.execute("""
+            CREATE TABLE IF NOT EXISTS daily_settings (
+                guild_id TEXT PRIMARY KEY,
+                channel_id TEXT
+            )
+        """)
+
+        # Gamification module
+        await self.conn.execute("""
+            CREATE TABLE IF NOT EXISTS achievements (
+                user_id TEXT,
+                badge_name TEXT,
+                unlocked_at REAL,
+                PRIMARY KEY (user_id, badge_name)
+            )
+        """)
+        await self.conn.execute("""
+            CREATE TABLE IF NOT EXISTS user_level (
+                user_id TEXT PRIMARY KEY,
+                xp INTEGER DEFAULT 0,
+                level INTEGER DEFAULT 1
+            )
+        """)
+        await self.conn.execute("""
+            CREATE TABLE IF NOT EXISTS weekly_challenge (
+                guild_id TEXT PRIMARY KEY,
+                channel_id TEXT,
+                problem_name TEXT,
+                contest_id INTEGER,
+                p_index TEXT,
+                start_time REAL,
+                end_time REAL
+            )
+        """)
+
         # === one-time migration from old tables ===
         cursor = await self.conn.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name='starboard'"
@@ -1377,6 +1413,121 @@ class UserDbConn:
         cursor = await self.conn.execute(query, (guild_id,))
         await self.conn.commit()
         return cursor.rowcount
+
+    # Daily Problem methods
+    async def set_daily_channel(self, guild_id: int, channel_id: int) -> None:
+        query = """
+            INSERT OR REPLACE INTO daily_settings (guild_id, channel_id)
+            VALUES (?, ?)
+        """
+        await self.conn.execute(query, (guild_id, channel_id))
+        await self.conn.commit()
+
+    async def get_daily_channel(self, guild_id: int) -> int | None:
+        query = 'SELECT channel_id FROM daily_settings WHERE guild_id = ?'
+        cursor = await self.conn.execute(query, (guild_id,))
+        row = await cursor.fetchone()
+        return int(row[0]) if row else None
+
+    async def get_all_daily_channels(self) -> list[tuple[int, int]]:
+        query = 'SELECT guild_id, channel_id FROM daily_settings'
+        cursor = await self.conn.execute(query)
+        rows = await cursor.fetchall()
+        return [(int(row[0]), int(row[1])) for row in rows]
+
+    async def clear_daily_channel(self, guild_id: int) -> int:
+        query = 'DELETE FROM daily_settings WHERE guild_id = ?'
+        cursor = await self.conn.execute(query, (guild_id,))
+        await self.conn.commit()
+        return cursor.rowcount
+
+    # Gamification methods
+    async def add_achievement(
+        self, user_id: int, badge_name: str, unlocked_at: float
+    ) -> bool:
+        query = """
+            INSERT OR IGNORE INTO achievements (user_id, badge_name, unlocked_at)
+            VALUES (?, ?, ?)
+        """
+        cursor = await self.conn.execute(query, (str(user_id), badge_name, unlocked_at))
+        await self.conn.commit()
+        return cursor.rowcount > 0
+
+    async def get_achievements(self, user_id: int) -> list[str]:
+        query = 'SELECT badge_name FROM achievements WHERE user_id = ? ORDER BY unlocked_at DESC'  # noqa: E501
+        cursor = await self.conn.execute(query, (str(user_id),))
+        rows = await cursor.fetchall()
+        return [row[0] for row in rows]
+
+    async def get_user_level(self, user_id: int) -> tuple[int, int]:
+        """Returns (xp, level)"""
+        query = 'SELECT xp, level FROM user_level WHERE user_id = ?'
+        cursor = await self.conn.execute(query, (str(user_id),))
+        row = await cursor.fetchone()
+        if row:
+            return int(row[0]), int(row[1])
+        return 0, 1
+
+    async def add_xp(self, user_id: int, xp_amount: int) -> tuple[int, int, bool]:
+        """Adds XP and returns (new_xp, new_level, leveled_up)."""
+        xp, level = await self.get_user_level(user_id)
+        new_xp = xp + xp_amount
+        # Simple level formula: level = sqrt(xp / 100) + 1
+        import math
+
+        new_level = int(math.sqrt(new_xp / 100)) + 1
+
+        leveled_up = new_level > level
+
+        query = """
+            INSERT OR REPLACE INTO user_level (user_id, xp, level)
+            VALUES (?, ?, ?)
+        """
+        await self.conn.execute(query, (str(user_id), new_xp, new_level))
+        await self.conn.commit()
+        return new_xp, new_level, leveled_up
+
+    # Weekly Challenge methods
+    async def set_weekly_challenge(
+        self,
+        guild_id: int,
+        channel_id: int,
+        problem_name: str,
+        contest_id: int,
+        p_index: str,
+        start_time: float,
+        end_time: float,
+    ) -> None:
+        query = """
+            INSERT OR REPLACE INTO weekly_challenge
+            (guild_id, channel_id, problem_name, contest_id,
+            p_index, start_time, end_time)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """
+        await self.conn.execute(
+            query,
+            (
+                str(guild_id),
+                str(channel_id),
+                problem_name,
+                contest_id,
+                p_index,
+                start_time,
+                end_time,
+            ),
+        )
+        await self.conn.commit()
+
+    async def get_weekly_challenge(self, guild_id: int) -> tuple | None:
+        query = 'SELECT channel_id, problem_name, contest_id, p_index, start_time, end_time FROM weekly_challenge WHERE guild_id = ?'  # noqa: E501
+        cursor = await self.conn.execute(query, (str(guild_id),))
+        row = await cursor.fetchone()
+        return row
+
+    async def get_all_weekly_challenges(self) -> list[tuple]:
+        query = 'SELECT guild_id, channel_id, problem_name, contest_id, p_index, start_time, end_time FROM weekly_challenge'  # noqa: E501
+        cursor = await self.conn.execute(query)
+        return await cursor.fetchall()
 
     async def close(self) -> None:
         if self.conn:
