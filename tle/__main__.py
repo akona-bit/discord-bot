@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import logging
 import os
+import sys
 from logging.handlers import TimedRotatingFileHandler
 from os import environ
 from pathlib import Path, Path as _Path
@@ -24,10 +25,27 @@ from tle.util import codeforces_common as cf_common, db, discord_common  # noqa:
 from tle.util.gist_backup import GistBackup  # noqa: E402
 
 
+def force_utf8_console() -> None:
+    """Make the console streams UTF-8 so non-ASCII log output does not depend on
+    the host code page. A Windows console on cp1252 raises UnicodeEncodeError
+    for Vietnamese text."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, 'reconfigure', None)
+        if reconfigure is None:
+            continue
+        try:
+            reconfigure(encoding='utf-8', errors='replace')
+        except (OSError, ValueError):
+            # Detached or closed stream, nothing to reconfigure.
+            pass
+
+
 def setup() -> None:
     # Make required directories.
     for path in constants.ALL_DIRS:
         os.makedirs(path, exist_ok=True)
+
+    force_utf8_console()
 
     # logging to console and file on daily interval
     logging.basicConfig(
@@ -38,7 +56,11 @@ def setup() -> None:
         handlers=[
             logging.StreamHandler(),
             TimedRotatingFileHandler(
-                constants.LOG_FILE_PATH, when='D', backupCount=3, utc=True
+                constants.LOG_FILE_PATH,
+                when='D',
+                backupCount=3,
+                utc=True,
+                encoding='utf-8',
             ),
         ],
     )
